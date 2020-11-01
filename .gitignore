@@ -1,0 +1,10 @@
+.idea/
+coil_data/
+*__pycache__/
+.ipynb_checkpoints/
+summary/
+model/
+__pycache__
+*summary*
+.DS_Store
+data/
