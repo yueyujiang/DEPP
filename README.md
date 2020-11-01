@@ -23,7 +23,7 @@
 | **resblock_num**       | number of residual block (default: 1)                                                                                 |
 
 ### Calculating distance matrix
-`python depp_distance.py query_seq_file=$query_seq_file model_path=$model_parameters_file backbone_seq_file=$backbone_seq_file
+`python depp_distance.py query_seq_file=$query_seq_file model_path=$model_parameters_file backbone_seq_file=$backbone_seq_file`
 | arguments             | description                                                             |
 |-----------------------|-------------------------------------------------------------------------|
 |   **query_seq_file**  | path to the query sequences file (in **fasta** format, **required**)    |
