@@ -20,12 +20,14 @@ def main():
     tree = treeswift.read_tree(args.backbone_tree, 'newick')
     true_max = 2 * tree.height()
     data = {}
+    s_set = set(s)
     for i in range(len(original_distance)):
         line = list(original_distance.iloc[i])
         seq_name = line[0]
         with open(f"{args.outdir}/depp_tmp/{seq_name}_leaves.txt", "r") as f:
             method = set(f.read().split("\n"))
             method.remove('')
+            method = method.intersection(s_set)
         query_median = np.median(original_distance[np.array(method)].iloc[i])
         ratio = true_max / (query_median + 1e-7)
         b = original_distance.iloc[0].values[1:] * ratio

@@ -19,4 +19,5 @@ while read p; do
 done < $outdir/depp_tmp/seq_name.txt
 python distance_correction.py outdir=$outdir backbone_tree=$backbone_tree
 echo "finish correction!"
+run_apples.py -d "./${ourdir}/depp_distance/depp_correction.csv" -t "./${backbone_tree}" -o "./${outdir}/depp_tmp/tmp.jplace"
 rm -rf "./${outdir}/depp_tmp/"
