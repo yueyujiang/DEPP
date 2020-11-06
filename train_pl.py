@@ -68,7 +68,7 @@ def main():
         max_epochs=args.epoch,
         gradient_clip_val=args.cp,
         benchmark=True,
-        early_stop_callback=early_stop_callback,
+        callbacks=[early_stop_callback],
         checkpoint_callback=checkpoint_callback
     )
 

@@ -3,7 +3,7 @@ data_dir: ''
 summary_dir: 'summary'
 model_dir: 'model'
 distance_mode: 'L2'
-embedding_size: 128
+embedding_size: 512 
 sequence_length: 128
 h_channel: 8
 beta_ratio: 50000
@@ -33,7 +33,7 @@ plot_all_freq: 2000
 lr_update_freq: 100
 bar_update_freq: 100
 val_freq: 20
-patience: 3
+patience: 5 
 model_path: ''
 outdir: 'depp_distance'
 

@@ -29,6 +29,7 @@ class encoder(nn.Module):
                                 args.embedding_size,
                                 args.sequence_length)
         self.args = args
+        self.train_loss = 0
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         bs, channel, seq_length = x.shape
@@ -51,6 +52,7 @@ class model(LightningModule):
 
         self.dis_loss_w = 100
         self.train_loss = []
+        self.val_loss = float('inf') 
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         encoding = self.encoder(x)
@@ -71,6 +73,7 @@ class model(LightningModule):
         dis_loss = utils.mse_loss(distance, gt_distance, self.hparams.weighted_method)
 
         loss = self.dis_loss_w * dis_loss * self.hparams.dis_loss_ratio
+        self.val_loss += loss
 
         return {'loss': loss}
 
@@ -79,7 +82,6 @@ class model(LightningModule):
             outputs: Union[List[Dict[str, torch.Tensor]], List[List[Dict[str, torch.Tensor]]]]
     ) -> Dict[str, Dict[str, torch.Tensor]]:
         self.dis_loss_w = 100 + 1e-3 * (self.trainer.current_epoch - 1e4) * (self.trainer.current_epoch > 1e4)
-        return {}
 
     def configure_optimizers(self):
         return torch.optim.RMSprop(self.parameters(), lr=self.hparams.lr)
@@ -93,30 +95,12 @@ class model(LightningModule):
         return loader
 
     def validation_step(self, batch, batch_idx):
-        nodes = batch['nodes']
-        seqs = batch['seqs'].float()
-        encoding = self(seqs)
-        return {'encoding': encoding, 'nodes': nodes, 'seq': seqs}
+        return {}        
 
     def validation_epoch_end(self, outputs):
-        val_encodings = torch.cat([output['encoding'] for output in outputs], dim=0)
-        val_nodes = list(itertools.chain.from_iterable([output['nodes'] for output in outputs]))
-
-        device = val_encodings.device
-        val_dis = []
-        for i in range(len(val_encodings)):
-            val_dis.append(
-                utils.distance(val_encodings[i].cpu(), val_encodings.detach().cpu(),
-                               self.hparams.distance_mode) * self.hparams.distance_ratio)
-        val_dis = torch.cat(val_dis)
-
-        val_gt_dis = self.train_data.true_distance(val_nodes, val_nodes)
-
-        val_loss = utils.mse_loss(val_dis, val_gt_dis, self.hparams.weighted_method)
-        self.train_loss.append(val_loss.item())
-
-        logs = {'val_loss': val_loss}
-        return {'val_loss': val_loss, 'progress_bar': logs}
+        val_loss = self.val_loss
+        self.val_loss = 0
+        self.log('val_loss', val_loss)
 
     def val_dataloader(self):
         # TODO: do a real train/val split
@@ -134,7 +118,7 @@ class model(LightningModule):
             batch_idx: int,
             optimizer: Optimizer,
             optimizer_idx: int,
-            second_order_closure: Optional[Callable] = None,
+            optimizer_closure: Optional[Callable] = None,
             on_tpu: bool = False,
             using_native_amp: bool = False,
             using_lbfgs: bool = False,
@@ -151,7 +135,7 @@ class model(LightningModule):
             batch_idx,
             optimizer,
             optimizer_idx,
-            second_order_closure,
+            optimizer_closure,
             on_tpu,
             using_native_amp,
             using_lbfgs,

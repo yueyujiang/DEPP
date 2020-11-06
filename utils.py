@@ -111,30 +111,30 @@ def save_depp_dist(model, args):
     print(f'{len(query_seq_names)} query sequence(s)')
     print(f'calculating embeddings...')
     backbone_encodings = []
-    for i in range(math.ceil(len(backbone_seq_tensor) / 10.0)):
-        encodings_tmp = model(backbone_seq_tensor[i * 10: (i + 1) * 10].float()).detach()
+    for i in range(math.ceil(len(backbone_seq_tensor) / 1000.0)):
+        encodings_tmp = model(backbone_seq_tensor[i * 1000: (i + 1) * 1000].float()).detach()
         backbone_encodings.append(encodings_tmp)
     backbone_encodings = torch.cat(backbone_encodings, dim=0)
 
     query_encodings = []
-    for i in range(math.ceil(len(query_seq_tensor) / 10.0)):
-        encodings_tmp = model(query_seq_tensor[i * 10: (i + 1) * 10].float()).detach()
+    for i in range(math.ceil(len(query_seq_tensor) / 1000.0)):
+        encodings_tmp = model(query_seq_tensor[i * 1000: (i + 1) * 1000].float()).detach()
         query_encodings.append(encodings_tmp)
     query_encodings = torch.cat(query_encodings, dim=0)
     print(f'finish embedding calculation!')
 
-    backbone_dist = []
-    for i in range(len(backbone_encodings)):
-        backbone_dist.append(distance(backbone_encodings[i], backbone_encodings, args.distance_mode) * args.distance_ratio)
-    backbone_dist = torch.cat(backbone_dist, dim=0)
-    median_max_distance = float(torch.median((backbone_dist ** 2).max(-1)[0]))
+    #backbone_dist = []
+    #for i in range(len(backbone_encodings)):
+    #    backbone_dist.append(distance(backbone_encodings[i], backbone_encodings, args.distance_mode) * args.distance_ratio)
+    #backbone_dist = torch.cat(backbone_dist, dim=0)
+    #median_max_distance = float(torch.median((backbone_dist ** 2).max(-1)[0]))
 
-    print(f'median_max: {median_max_distance}')
+    #print(f'median_max: {median_max_distance}')
 
     query_dist = distance(query_encodings, backbone_encodings, args.distance_mode) * args.distance_ratio
 
     data_origin = collections.defaultdict(list)
-    data_median = collections.defaultdict(list)
+    #data_median = collections.defaultdict(list)
     for j, qe in enumerate(query_encodings):
         for i, e in enumerate(backbone_encodings):
             d = float(query_dist[j, i])
@@ -142,20 +142,20 @@ def save_depp_dist(model, args):
                 d = d ** 2
             # print(d)
             data_origin[query_seq_names[j]].append(d)
-            data_median[query_seq_names[j]].append(d)
+            #data_median[query_seq_names[j]].append(d)
 
-        max_model_distance = max(data_origin[query_seq_names[j]])
-        r_median = median_max_distance / max_model_distance
-        for m, v in enumerate(data_median[query_seq_names[j]]):
-            data_median[query_seq_names[j]][m] = data_median[query_seq_names[j]][m] * r_median
+        #max_model_distance = max(data_origin[query_seq_names[j]])
+        #r_median = median_max_distance / max_model_distance
+        #for m, v in enumerate(data_median[query_seq_names[j]]):
+        #    data_median[query_seq_names[j]][m] = data_median[query_seq_names[j]][m] * r_median
 
-    data_median = pd.DataFrame.from_dict(data_median, orient='index', columns=backbone_seq_names)
+    #data_median = pd.DataFrame.from_dict(data_median, orient='index', columns=backbone_seq_names)
     data_origin = pd.DataFrame.from_dict(data_origin, orient='index', columns=backbone_seq_names)
 
-    data_median.to_csv(os.path.join(dis_file_root, f'depp_correction.csv'), sep='\t')
+    #data_median.to_csv(os.path.join(dis_file_root, f'depp_correction.csv'), sep='\t')
     data_origin.to_csv(os.path.join(dis_file_root, f'depp.csv'), sep='\t')
 
-    print('distanace matrix saved!')
+    print('original distanace matrix saved!')
 #
 # def true_distance(nodes1, nodes2, distance_matrix):
 #     gt_distance_list = itemgetter(*nodes1)(distance_matrix)
