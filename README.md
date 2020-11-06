@@ -31,7 +31,7 @@
 | **-q**                | path to the query sequences file (in **fasta** format, **required**)    |
 | **-b**                | path to the backbone sequences file (in **fasta** format, **required**) |
 | **-m**                | path to the depp model's parameters file (**required**)                 |
-| **-o**                | directory to store the output distance (directory for output distance matrix) |
+| **-o**                | directory to store the output distance (directory for output distance matrix, **required**) |
 | **-t**                | path to the backbone tree file (in **newick** format, **required**).    |
 
 Running the above command will give two distance matricies (`depp.csv` and `depp_correction.csv`), each as a tab delimited csv file with column and row headers. Rows represent query sequences and columns represent backbone sequences. `depp.csv` and `depp_correction.csv` represent distance_matrix before and after correction descripted in the paper.
