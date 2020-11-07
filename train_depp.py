@@ -63,18 +63,31 @@ def main():
         prefix=''
     )
     print(model_dir)
-    trainer = pl.Trainer(
-        logger=logger,
-        gpus=args.gpus,
-        progress_bar_refresh_rate=args.bar_update_freq,
-        distributed_backend='dp',
-        check_val_every_n_epoch=args.val_freq,
-        max_epochs=args.epoch,
-        gradient_clip_val=args.cp,
-        benchmark=True,
-        callbacks=[early_stop_callback],
-        checkpoint_callback=checkpoint_callback
-    )
+    if args.gpus == 0:
+        trainer = pl.Trainer(
+            logger=logger,
+            gpus=args.gpus,
+            progress_bar_refresh_rate=args.bar_update_freq,
+            check_val_every_n_epoch=args.val_freq,
+            max_epochs=args.epoch,
+            gradient_clip_val=args.cp,
+            benchmark=True,
+            callbacks=[early_stop_callback],
+            checkpoint_callback=checkpoint_callback
+        )
+    else:
+        trainer = pl.Trainer(
+            logger=logger,
+            gpus=args.gpus,
+            progress_bar_refresh_rate=args.bar_update_freq,
+            distributed_backend='dp',
+            check_val_every_n_epoch=args.val_freq,
+            max_epochs=args.epoch,
+            gradient_clip_val=args.cp,
+            benchmark=True,
+            callbacks=[early_stop_callback],
+            checkpoint_callback=checkpoint_callback
+        )
 
     trainer.fit(model)
 
