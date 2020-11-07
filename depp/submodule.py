@@ -1,9 +1,7 @@
-from typing import List, Tuple, Dict, Callable, Any
 import torch
-from torch import nn
-import torch.nn.functional as F
-from argparse import Namespace
 import torch.distributions.normal as normal
+from torch import nn
+from typing import List, Callable
 
 class stack_conv(nn.Module):
     def __init__(self,

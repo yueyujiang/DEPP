@@ -1,12 +1,11 @@
 import torch
-import submodule
-import data
 import torch.nn as nn
-import utils
+from depp import submodule
+from depp import data
+from depp import utils
 from pytorch_lightning.core.lightning import LightningModule
 from torch.utils.data import DataLoader
 from typing import List, Dict, Optional, Callable, Union
-import itertools
 from torch.optim.optimizer import Optimizer
 
 

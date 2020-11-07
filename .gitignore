@@ -10,3 +10,7 @@ __pycache__
 data/
 depp_distance/
 core*
+build/
+depp.egg-info/
+depp1.egg-info/
+dist/

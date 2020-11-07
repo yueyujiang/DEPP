@@ -1,6 +1,5 @@
 import torch
 import os
-import collections
 import pandas as pd
 import math
 import numpy as np

@@ -1,13 +1,15 @@
+#!/usr/bin/python
 import os
-import Model_pl
-import utils
+from depp import Model_pl
+from depp import utils
+from depp import default_config
 from omegaconf import OmegaConf
 
 os.environ['OMP_NUM_THREADS'] = '1'
 os.environ['MKL_NUM_THREADS'] = '1'
 
 def main():
-    args_base = OmegaConf.load('./config/default_config.yaml')
+    args_base = OmegaConf.create(default_config.default_config)
 
     args_cli = OmegaConf.from_cli()
 
