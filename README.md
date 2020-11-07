@@ -1,31 +1,27 @@
 # DEPP
 ## requirements
 * Python 3
-* PyTorch
-* Numpy
-* Pandas
-* [PyTorch Lightning](https://github.com/PyTorchLightning/pytorch-lightning)
-* [Treeswift](https://github.com/niemasd/TreeSwift)
-* [biopython](https://biopython.org/wiki/Download)
-* [OmegaConf](https://github.com/omry/omegaconf)
-* [APPLES](https://github.com/balabanmetin/apples)
-* [gappa](https://github.com/lczech/gappa)
+* [Newick Utilities](http://cegg.unige.ch/newick_utils) `conda install -c bioconda newick_utils`
+* [gappa](https://github.com/lczech/gappa) `conda install -c bioconda gappa`
+
+## Installation
+`pip install depp`
 
 ## Usage
 ### Model training
-`python train_pl.py backbone_tree_file=$backbone_tree_file backbone_seq_file=$backbone_seq_file gpus=$gpus_id`
+`train_depp.py backbone_tree_file=$backbone_tree_file backbone_seq_file=$backbone_seq_file gpus=$gpus_id`
 | arguments              | descriptions                                                                                                            |
 |------------------------|-------------------------------------------------------------------------------------------------------------------------|
 | **backbone_tree_file** | path to the backbone tree file (in **newick** format, **required**)                                                     |
 | **backbone_seq_file**  | path to the backbone sequences file (in **fasta** format, **required**)                                                 |
 | **model_dir**          | directory to save model's parameters for later used (default `model`)                                                   |
-| **gpus**               | gpu ids (default `'[0]'`; if no gpu is available, use `gpus=None`; this version doesn't support multiple gpus)          |
+| **gpus**               | gpu ids (default `'[0]'`; this version doesn't support multiple temporarily)                                            |
 | **embedding_size**     | embedding size (default: `128`)                                                                                         |
 | **batch_size**         | batch size (default: `32`)                                                                                              |
 | **resblock_num**       | number of residual blocks (default: `1`)                                                                                |
 
 ### Calculating distance matrix
-`bash calculate_depp_distance.sh -q $query_seq_file -b $backbone_seq_file -m $model_path -t $backbone_tree_file -o $outdir`
+`distance_depp.sh -q $query_seq_file -b $backbone_seq_file -m $model_path -t $backbone_tree_file -o $outdir`
 | arguments             | descriptions                                                            |
 |-----------------------|-------------------------------------------------------------------------|
 | **-q**                | path to the query sequences file (in **fasta** format, **required**)    |
