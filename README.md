@@ -1,8 +1,8 @@
 # DEPP
 ## requirements
 * Python 3
-* [Newick Utilities](http://cegg.unige.ch/newick_utils) `conda install -c bioconda gappa`
-* [gappa](https://github.com/lczech/gappa) `conda install -c bioconda newick_utils`
+* [Newick Utilities](http://cegg.unige.ch/newick_utils) `conda install -c bioconda newick_utils`
+* [gappa](https://github.com/lczech/gappa) `conda install -c bioconda gappa`
 
 ## Installation
 `pip install depp`
