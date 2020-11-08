@@ -15,7 +15,7 @@
 | **backbone_tree_file** | path to the backbone tree file (in **newick** format, **required**)                                                     |
 | **backbone_seq_file**  | path to the backbone sequences file (in **fasta** format, **required**)                                                 |
 | **model_dir**          | directory to save model's parameters for later used (default `model`)                                                   |
-| **gpus**               | gpu ids (default `'[0]'`, **Don't** omit the quotes, i.e. use `gpus='[0]'` instead of `gpus=[0]`; if no gpu is available, use `gpus=0`; this version doesn't support multiple temporarily, we will update it later)                                            |
+| **gpus**               | gpu ids (default `'[0]'`, **Don't** omit the quotes, i.e. use `gpus='[0]'` instead of `gpus=[0]`; if no gpu is available, use `gpus=0`; this version doesn't support multiple gpus temporarily, we will update it later)                                            |
 | **embedding_size**     | embedding size (default: `128`)                                                                                         |
 | **batch_size**         | batch size (default: `32`)                                                                                              |
 | **resblock_num**       | number of residual blocks (default: `1`)                                                                                |
