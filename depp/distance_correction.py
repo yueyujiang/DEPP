@@ -33,7 +33,7 @@ def main():
         query_median = np.median(original_distance[np.array(method)].iloc[i])
         ratio = true_max / (query_median + 1e-7)
         # print(ratio)
-        b = original_distance.iloc[0].values[1:] * ratio
+        b = original_distance.iloc[i].values[1:] * ratio
         seq_dict = dict(zip(s, b))
         data[seq_name] = seq_dict
     data = pd.DataFrame.from_dict(data, orient='index', columns=s)    

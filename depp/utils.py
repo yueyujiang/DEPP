@@ -124,6 +124,7 @@ def save_depp_dist(model, args):
 
     query_dist = distance(query_encodings, backbone_encodings, args.distance_mode) * args.distance_ratio
     query_dist = np.array(query_dist)
+    query_dist[query_dist < 1e-6] = 0
     if args.weighted_method == 'square_root_fm':
         data_origin = dict(zip(query_seq_names, list(query_dist**2)))
     else:

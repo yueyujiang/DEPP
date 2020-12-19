@@ -88,7 +88,7 @@ class model(LightningModule):
     def train_dataloader(self) -> DataLoader:
         loader = DataLoader(self.train_data,
                             batch_size=self.hparams.batch_size,
-                            num_workers=4,
+                            num_workers=self.hparams.num_worker,
                             shuffle=True,
                             drop_last=True)
         return loader
@@ -107,7 +107,7 @@ class model(LightningModule):
         loader = DataLoader(self.train_data,
                             batch_size=self.hparams.batch_size,
                             shuffle=False,
-                            num_workers=4,
+                            num_workers=self.hparams.num_worker,
                             drop_last=False)
         return loader
 
