@@ -43,11 +43,13 @@ class encoder(nn.Module):
 class model(LightningModule):
     def __init__(self, args):
         super(model, self).__init__()
-        utils.get_seq_length(args)
         self.save_hyperparameters(args)
-        self.encoder = encoder(args)
+        if not self.hparams.sequence_length:
+            utils.get_seq_length(self.hparams)
+        self.save_hyperparameters(self.hparams)
+        self.encoder = encoder(self.hparams)
         self.channel = 4
-        args.distance_ratio = float(1.0 / float(args.embedding_size) / 10 * float(args.distance_alpha))
+        self.hparams.distance_ratio = float(1.0 / float(self.hparams.embedding_size) / 10 * float(self.hparams.distance_alpha))
 
         self.dis_loss_w = 100
         self.train_loss = []

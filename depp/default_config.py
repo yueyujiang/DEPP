@@ -5,7 +5,7 @@ default_config = \
 'model_dir': 'model',
 'distance_mode': 'L2',
 'embedding_size': 512,
-'sequence_length': 128,
+'sequence_length': 0,
 'h_channel': 8,
 'beta_ratio': 50000,
 
