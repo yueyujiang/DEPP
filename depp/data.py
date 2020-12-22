@@ -32,6 +32,9 @@ class data(Dataset):
             print('Finish distance matrix calculation!')
 
         seq_tmp = {}
+        if args.replicate_seq:
+            for k in self_seq:
+                seq_tmp[k.split('_')[0]] = torch.zeros(4, L)
         for k in self_seq:
             seq = np.zeros([4, L])
             raw_seq = np.array(self_seq[k])
@@ -39,7 +42,13 @@ class data(Dataset):
             seq[1][raw_seq == 'C'] = 1
             seq[2][raw_seq == 'G'] = 1
             seq[3][raw_seq == 'T'] = 1
-            seq_tmp[k] = torch.from_numpy(seq)
+            if args.replicate_seq:
+                seq_tmp[k.split('_')[0]] += torch.from_numpy(seq)
+            else:
+                seq_tmp[k] = torch.from_numpy(seq)
+        if args.replicate_seq:
+            for k in seq_tmp:
+                seq_tmp[k] = seq_tmp[k].float() / seq_tmp[k].sum(dim=0, keepdim=True)
         self.seq = seq_tmp
 
     def true_distance(self, nodes1, nodes2):

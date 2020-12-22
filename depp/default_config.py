@@ -37,7 +37,8 @@ default_config = \
 'patience': 5,
 'model_path': '',
 'outdir': 'depp_distance',
-'num_worker': 4}
+'num_worker': 4,
+'replicate_seq': False}
 
 #def get_cfg_defaults():
 #    """Get a yacs CfgNode object with default values for my_project."""
