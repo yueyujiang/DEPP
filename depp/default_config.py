@@ -30,7 +30,7 @@ default_config = \
 'print_freq': 1000,
 'stop_par': 200,
 'gpus': [0],
-'plot_all_freq': 2000,
+'plot_all_freqdistance_depp.sh -q ./seq/query_seq/query_seq.fa -b ./seq/backbone_seq/backbone_seq.fa -m model/epoch\=599.ckpt -t tree/backbone_tree/backbone.newick -o dis_mat/': 2000,
 'lr_update_freq': 100,
 'bar_update_freq': 1,
 'val_freq': 50,

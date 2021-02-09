@@ -63,10 +63,10 @@ def mse_loss(model_dist, true_dist, weighted_method):
         weight = 1 / (true_dist + 1e-4) ** 4
         return ((model_dist - true_dist) ** 2 * weight).mean()
 
-def process_seq(self_seq, args):
+def process_seq(self_seq, args, isbackbone):
     L = len(list(self_seq.values())[0])
     seq_tmp = {}
-    if args.replicate_seq:
+    if args.replicate_seq and isbackbone:
         for k in self_seq:
             seq_tmp[k.split('_')[0]] = torch.zeros(4, L)
     for k in self_seq:
@@ -76,13 +76,13 @@ def process_seq(self_seq, args):
         seq[1][raw_seq == 'C'] = 1
         seq[2][raw_seq == 'G'] = 1
         seq[3][raw_seq == 'T'] = 1
-        if args.replicate_seq:
+        if args.replicate_seq and isbackbone:
             seq_tmp[k.split('_')[0]] += torch.from_numpy(seq)
         else:
             seq_tmp[k] = torch.from_numpy(seq)
-    if args.replicate_seq:
+    if args.replicate_seq and isbackbone:
         for k in seq_tmp:
-            seq_tmp[k] = seq_tmp[k].float() / seq_tmp[k].sum(dim=0, keepdim=True)
+            seq_tmp[k] = seq_tmp[k].float() / (seq_tmp[k].sum(dim=0, keepdim=True) + 1e-8)
     names = []
     seqs = []
     for k in seq_tmp:
@@ -103,8 +103,8 @@ def save_depp_dist(model, args):
     backbone_seq = SeqIO.to_dict(SeqIO.parse(backbone_seq_file, "fasta"))
     query_seq = SeqIO.to_dict(SeqIO.parse(query_seq_file, "fasta"))
 
-    backbone_seq_names, backbone_seq_tensor = process_seq(backbone_seq, args)
-    query_seq_names, query_seq_tensor = process_seq(query_seq, args)
+    backbone_seq_names, backbone_seq_tensor = process_seq(backbone_seq, args, isbackbone=True)
+    query_seq_names, query_seq_tensor = process_seq(query_seq, args, isbackbone=False)
 
     for param in model.parameters():
         param.requires_grad = False
@@ -127,7 +127,7 @@ def save_depp_dist(model, args):
 
     query_dist = distance(query_encodings, backbone_encodings, args.distance_mode) * args.distance_ratio
     query_dist = np.array(query_dist)
-    query_dist[query_dist < 1e-6] = 0
+    query_dist[query_dist < 1e-3] = 0
     if args.weighted_method == 'square_root_fm':
         data_origin = dict(zip(query_seq_names, list(query_dist**2)))
     else:
@@ -136,5 +136,8 @@ def save_depp_dist(model, args):
     data_origin = pd.DataFrame.from_dict(data_origin, orient='index', columns=backbone_seq_names)
 
     data_origin.to_csv(os.path.join(dis_file_root, f'depp.csv'), sep='\t')
-
+    if not os.path.isdir(f'{args.outdir}/depp_tmp'):
+        os.makedirs(f'{args.outdir}/depp_tmp')
+    with open(f'{args.outdir}/depp_tmp/seq_name.txt', 'w') as f:
+        f.write("\n".join(query_seq_names)+'\n')
     print('original distanace matrix saved!')

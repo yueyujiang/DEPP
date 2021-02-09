@@ -17,7 +17,7 @@ class data(Dataset):
         self_seq = SeqIO.to_dict(SeqIO.parse(backbone_seq_file, "fasta"))
         tree = treeswift.read_tree(backbone_tree_file, 'newick')
 
-        self.nodes = list(self_seq.keys())
+#        self.nodes = list(self_seq.keys())
 
         print('finish data loading!')
 
@@ -48,8 +48,9 @@ class data(Dataset):
                 seq_tmp[k] = torch.from_numpy(seq)
         if args.replicate_seq:
             for k in seq_tmp:
-                seq_tmp[k] = seq_tmp[k].float() / seq_tmp[k].sum(dim=0, keepdim=True)
+                seq_tmp[k] = seq_tmp[k].float() / (seq_tmp[k].sum(dim=0, keepdim=True) + 1e-8)
         self.seq = seq_tmp
+        self.nodes = list(self.seq.keys())
 
     def true_distance(self, nodes1, nodes2):
         gt_distance_list = itemgetter(*nodes1)(self.distance_matrix)
