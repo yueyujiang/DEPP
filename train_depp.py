@@ -80,7 +80,7 @@ def main():
             logger=logger,
             gpus=args.gpus,
             progress_bar_refresh_rate=args.bar_update_freq,
-            distributed_backend='dp',
+            distributed_backend='ddp',
             check_val_every_n_epoch=args.val_freq,
             max_epochs=args.epoch,
             gradient_clip_val=args.cp,
