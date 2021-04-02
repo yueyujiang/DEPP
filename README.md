@@ -8,8 +8,34 @@
 `pip install depp`
 
 ## Usage
+### Sequences analysis using WoL data
+#### Prepare
+* Install UPP following the instructions [here](https://github.com/smirarab/sepp/blob/master/README.UPP.md), make sure that run_upp.py is executable.  
+* Sequences can be either unaligned ASV (16S) or unaligned MAG data or both.
+* Marker genes    
+  - Identify the marker genes using the protocols from [WoL project](https://biocore.github.io/wol/protocols/).  
+  - Rename each sequence file using the the format: <marker gene's id>.fa, e.g. p0000.fa, p0001.fa...  
+* ASV  
+  - Models of five types of 16S data is pretrained: full-length (~1600bp), V4 region (~250bp), V3+V4 region (~400bp), V4 100 (~100bp), V4 150 (~150bp). (If your ASV data is in the above five types, you can analyze your data directly. Otherwise, please align your sequences and then train your own model using the `train_depp.py` command)  
+  - Rename your ASV data using the following rules:  
+    - full-length 16S: 16s_full_length.fa  
+    - V3+V4 region: 16s_v3_v4.fa  
+    - V4 region: 16s_v4.fa  
+    - V4 100bp: 16s_v4_100.fa  
+    - V4 100bp: 16s_v4_150.fa  
+* Put all your query sequences files into one empty directory.  
+* Download the models and auxiliary data.  
+
+#### Running
+`wol_placement.sh -q directory/to/query/sequences -o directory/for/output -a directory/to/auxiliary/data/accessory`  
+This command will give you a output directory named `depp_results`. items inside the directory include:  
+* `summary` directory:  
+  - placement tree in jplace and newick format for each sequences file.  
+  - placement tree in jplace and newick format that include all the queries from all the files provided  
+* each sequences file will have a directory which includes the distacne matrix from queries to backbone species.  
+
 ### Model training
-`train_depp.py backbone_tree_file=$backbone_tree_file backbone_seq_file=$backbone_seq_file gpus=$gpus_id`
+`train_depp.py backbone_tree_file=backbone/tree/file backbone_seq_file=backbone/seq/file gpus=$gpus_id`
 | arguments              | descriptions                                                                                                            |
 |------------------------|-------------------------------------------------------------------------------------------------------------------------|
 | **backbone_tree_file** | path to the backbone tree file (in **newick** format, **required**)                                                     |
@@ -21,7 +47,7 @@
 | **resblock_num**       | number of residual blocks (default: `1`)                                                                                |
 
 ### Calculating distance matrix
-`distance_depp.sh -q $query_seq_file -b $backbone_seq_file -m $model_path -t $backbone_tree_file -o $outdir`
+`distance_depp.sh -q query/seq/file -b $backbone/seq/file -m model/path -t backbone/tree/file -o $outdir`
 | arguments             | descriptions                                                            |
 |-----------------------|-------------------------------------------------------------------------|
 | **-q**                | path to the query sequences file (in **fasta** format, **required**)    |
