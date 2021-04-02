@@ -59,4 +59,4 @@ This command will give you a output directory named `depp_results`. items inside
 
 Running the above command will give two distance matricies (`depp.csv` and `depp_correction.csv`), each as a tab delimited csv file with column and row headers. Rows represent query sequences and columns represent backbone sequences. `depp.csv` and `depp_correction.csv` represent distance_matrix before and after correction descripted in the paper.
 
-Any quesions? Please contact <y5jiang@eng.ucsd.edu>.
+Any questions? Please contact <y5jiang@eng.ucsd.edu>.
