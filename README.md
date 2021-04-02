@@ -9,7 +9,7 @@
 
 ## Usage
 ### Sequences analysis using WoL data
-We provide the pretrained model for WoL marker genes and ASV data. Users can analyze the sequence data directly using DEPP.  
+We provide the pretrained model for WoL marker genes and ASV data. Users can place the query sequences onto the WoL species tree directly using DEPP.  
 #### Preparation
 * Install UPP following the instructions [here](https://github.com/smirarab/sepp/blob/master/README.UPP.md), make sure that run_upp.py is executable.  
 * Sequences can be either unaligned ASV (16S) or unaligned MAG data or both.
