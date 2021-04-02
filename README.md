@@ -43,7 +43,7 @@ This command will give you a output directory named `depp_results`. items inside
 | **backbone_seq_file**  | path to the backbone sequences file (in **fasta** format, **required**)                                                 |
 | **model_dir**          | directory to save model's parameters for later used (default `model`)                                                   |
 | **gpus**               | gpu ids (default `'[0]'`, **Don't** omit the quotes, i.e. use `gpus='[0]'` instead of `gpus=[0]`; **if no gpu is available**, use `gpus=0`; this version doesn't support multiple gpus temporarily, we will update it later)                                            |
-| **embedding_size**     | embedding size (default: `128`)                                                                                         |
+| **embedding_size**     | embedding size <a href="https://www.codecogs.com/eqnedit.php?latex=2^{\frac{1}{2}\lfloor{\log_2&space;(100&space;n)}\rfloor}" target="_blank"><img src="https://latex.codecogs.com/gif.latex?2^{\frac{1}{2}\lfloor{\log_2&space;(100&space;n)}\rfloor}" title="2^{\frac{1}{2}\lfloor{\log_2 (100 n)}\rfloor}" /></a>)                                                                                         |
 | **batch_size**         | batch size (default: `32`)                                                                                              |
 | **resblock_num**       | number of residual blocks (default: `1`)                                                                                |
 
