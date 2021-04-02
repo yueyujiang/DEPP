@@ -10,7 +10,7 @@
 ## Usage
 ### Sequences analysis using WoL data
 We provide the pretrained model for WoL marker genes and ASV data. Users can analyze the sequence data directly using DEPP.  
-#### Prepare
+#### Preparation
 * Install UPP following the instructions [here](https://github.com/smirarab/sepp/blob/master/README.UPP.md), make sure that run_upp.py is executable.  
 * Sequences can be either unaligned ASV (16S) or unaligned MAG data or both.
 * Marker genes    
@@ -58,3 +58,5 @@ This command will give you a output directory named `depp_results`. items inside
 | **-t**                | path to the backbone tree file (in **newick** format, **required**).    |
 
 Running the above command will give two distance matricies (`depp.csv` and `depp_correction.csv`), each as a tab delimited csv file with column and row headers. Rows represent query sequences and columns represent backbone sequences. `depp.csv` and `depp_correction.csv` represent distance_matrix before and after correction descripted in the paper.
+
+Any quesions? Please contact <y5jiang@eng.ucsd.edu>.
