@@ -25,7 +25,7 @@ We provide the pretrained model for WoL marker genes and ASV data. Users can pla
     - V4 100bp: 16s_v4_100.fa  
     - V4 100bp: 16s_v4_150.fa  
 * Put all your query sequences files into one empty directory.  
-* Download the models and auxiliary data (accessory.tar.gz) from [here](https://tera-trees.com/data/depp/) and unzip it.  
+* Download the models and auxiliary data (accessory.tar.gz) from [here](https://tera-trees.com/data/depp/latest/) and unzip it.  
 
 #### Running
 `wol_placement.sh -q directory/to/query/sequences -o directory/for/output -a directory/to/auxiliary/data/accessory`  
