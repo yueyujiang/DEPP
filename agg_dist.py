@@ -1,3 +1,5 @@
+#!/usr/bin/python
+
 import pandas as pd
 import collections
 import os
@@ -12,10 +14,12 @@ from Bio import SeqIO
 parser = argparse.ArgumentParser(description='test')
 parser.add_argument('-o', '--output-dir', type=str)
 parser.add_argument('-a', '--accessory-dir', type=str)
+parser.add_argument('-p', '--prefix', type=str)
 args = parser.parse_args()
 
 query_dir = args.output_dir
 accessory_dir = args.accessory_dir
+prefix = args.prefix
 
 tree = dendropy.Tree.get(path=f'{accessory_dir}/wol.nwk', schema='newick')
 backbone_leaves = [a.taxon.label for a in tree.leaf_nodes()]
@@ -23,6 +27,8 @@ dis_mat = pd.DataFrame(index=None, columns=backbone_leaves)
 weights = {}
 types = 'bins'
 for i, d in enumerate(os.listdir(query_dir)):
+    if not d.startswith(prefix):
+        continue
     file = f'{query_dir}/{d}/depp_correction.csv'
     if not os.path.isfile(file):
         continue
@@ -49,7 +55,8 @@ def agg_cell(x):
 dis_mat = dis_mat.applymap(agg_cell)
 if not os.path.isdir(f'{query_dir}/summary/'):
     os.makedirs(f'{query_dir}/summary/')
-dis_mat.to_csv(f'{query_dir}/summary/summarized_dist.csv', sep='\t')
+if prefix == 'p':
+    dis_mat.to_csv(f'{query_dir}/summary/marker_genes_dist.csv', sep='\t')
 # print(sorted(lens)[-4000000: -3990000])
 #             weights[k1][k2].append(1-qs[d])
 # print(sorted(lens)[-4000000: -3990000])

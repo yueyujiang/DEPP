@@ -3,12 +3,18 @@ import os
 import pandas as pd
 import math
 import numpy as np
+import dendropy
 from Bio import SeqIO
 
 def get_seq_length(args):
     backbone_seq_file = args.backbone_seq_file
+    backbone_tree_file = args.backbone_tree_file
     seq = SeqIO.to_dict(SeqIO.parse(backbone_seq_file, "fasta"))
     args.sequence_length = len(list(seq.values())[0])
+    tree = dendropy.Tree.get(path=backbone_tree_file, schema='newick')
+    num_nodes = len(tree.leaf_nodes())
+    if args.embedding_size == -1:
+        args.embedding_size = 2**math.floor(math.log2(10*num_nodes**(1/2)))
 
 def distance(nodes1, nodes2, mode):
     if len(nodes1.shape) == 1:
