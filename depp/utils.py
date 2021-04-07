@@ -16,7 +16,8 @@ def get_seq_length(args):
     if args.embedding_size == -1:
         args.embedding_size = 2**math.floor(math.log2(10*num_nodes**(1/2)))
 
-def distance(nodes1, nodes2, mode):
+def distance_portion(nodes1, nodes2, mode):
+    print('here')
     if len(nodes1.shape) == 1:
         nodes1 = nodes1.unsqueeze(0)
     if len(nodes2.shape) == 1:
@@ -37,6 +38,13 @@ def distance(nodes1, nodes2, mode):
         cosine = torch.nn.functional.cosine_similarity(nodes1, nodes2, dim=-1)
         return (1 - cosine ** 2) / (cosine + 1e-9)
 
+def distance(nodes1, nodes2, mode):
+    # node1: query
+    # node2: backbone
+    dist = []
+    for i in range(math.ceil(len(nodes1) / 1000.0)):
+        dist.append(distance_portion(nodes1[i*1000: (i+1)*1000], nodes2, mode))
+    return torch.cat(dist, dim=0)
 
 def mse_loss(model_dist, true_dist, weighted_method):
     assert model_dist.shape == true_dist.shape

@@ -37,6 +37,8 @@ fi
 echo "calculating distance matrices..."
 if [ -z "${aligned+x}" ]
 then
+  if [ $count1 -ne 0 ]
+  then
   for f in ${query_dir}/p*aligned.fa; do
     f=$(basename -- "$f")
     f="${f%_*}"
@@ -48,6 +50,9 @@ then
     fi
   done
   wait
+  fi
+  if [ $count2 -ne 0 ]
+  then
   for f in ${query_dir}/16*aligned.fa; do
     f=$(basename -- "$f")
     f="${f%_*}"
@@ -59,7 +64,10 @@ then
     fi
   done
   wait
+  fi
 else
+  if [ $count1 -ne 0 ]
+  then
   for f in ${query_dir}/p*.fa; do
     f=$(basename -- "$f")
     f="${f%.*}"
@@ -71,6 +79,9 @@ else
     fi
   done
   wait
+  fi
+  if [ $count2 -ne 0 ]
+  then
   for f in ${query_dir}/16*.fa; do
     f=$(basename -- "$f")
     f="${f%.*}"
@@ -82,12 +93,13 @@ else
     fi
   done
   wait
+  fi
 fi
 echo "finish distance matrices!"
 echo "placing queries..."
 
 mkdir ${out_dir}/summary > /dev/null 2>&1
-if [ $count1!=0 ]
+if [ $count1 -ne 0 ]
 then
   if [ -z "${aligned+x}" ]
     then
@@ -108,7 +120,7 @@ then
   agg_dist.py -o ${out_dir} -a ${accessory_dir} -p p
   run_apples.py -d ${out_dir}/summary/marker_genes_dist.csv -t ${accessory_dir}/wol.nwk -o ${out_dir}/summary/marker_genes_placement.jplace -f 0.25 -b 25 > /dev/null 2>&1
 fi
-if [ $count2!=0 ]
+if [ $count2 -ne 0 ]
 then
   if [ -z "${aligned+x}" ]
   then
@@ -116,7 +128,7 @@ then
         f=$(basename -- "$f")
         f="${f%_*}"
         run_apples.py -d ${out_dir}/${f}/depp_correction.csv -t ${accessory_dir}/wol.nwk -o ${out_dir}/summary/${f}_placement.jplace -f 0.25 -b 25 > /dev/null 2>&1
-        if [ $count1!=0 ]
+        if [ $count1 -ne 0 ]
         then
         merge_json.py --out-dir ${out_dir}
         fi
@@ -127,7 +139,7 @@ then
         f=$(basename -- "$f")
         f="${f%.*}"
         run_apples.py -d ${out_dir}/${f}/depp_correction.csv -t ${accessory_dir}/wol.nwk -o ${out_dir}/summary/${f}_placement.jplace -f 0.25 -b 25 > /dev/null 2>&1
-        if [ $count1!=0 ]
+        if [ $count1 -ne 0 ]
         then
         merge_json.py --out-dir ${out_dir}
         fi

@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setup(
 	name='depp',    # This is the name of your PyPI-package.
-        version='0.1.22',    # Update the version number for new releases
+        version='0.1.28',    # Update the version number for new releases
         scripts=['train_depp.py',
                  'distance_depp.sh',
                  'depp/depp_distance.py',
@@ -28,7 +28,7 @@ setup(
 			'torch',
 			'torchvision',
 			'pandas',
-			'pytorch-lightning ==1.0.5',
+			'pytorch-lightning==1.0.5',
 			'biopython',
 			'omegaconf',
 			'apples',
