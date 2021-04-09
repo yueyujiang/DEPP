@@ -16,8 +16,9 @@ run_apples.py -d "./${outdir}/depp.csv" -t "./${backbone_tree}" -o "./${outdir}/
 gappa examine graft --jplace-path "./${outdir}/depp_tmp/tmp.jplace" --out-dir "./${outdir}/depp_tmp" --allow-file-overwriting --fully-resolve > /dev/null 2>&1 
 #perl -ne 'if(/^>(\S+)/){print "$1\n"}' $query_sequence > "${outdir}/depp_tmp/seq_name.txt"
 while read p; do
-    sed -e's/);/,XXXXX:0)ROOT:0;/g' "${outdir}/depp_tmp/tmp.newick"|nw_reroot - $p| nw_clade - ROOT|nw_labels -I -|grep -v XXXXX > "${outdir}/depp_tmp/${p}_leaves.txt";
+    sed -e's/);/,XXXXX:0)ROOT:0;/g' "${outdir}/depp_tmp/tmp.newick"|nw_reroot - $p| nw_clade - ROOT|nw_labels -I -|grep -v XXXXX > "${outdir}/depp_tmp/${p}_leaves.txt" &
 done < "${outdir}/depp_tmp/seq_name.txt"
+wait
 distance_correction.py outdir=$outdir backbone_tree=$backbone_tree
 echo "finish correction!"
 #run_apples.py -d "./${ourdir}/depp_correction.csv" -t "./${backbone_tree}" -o "./${outdir}/depp_tmp/tmp.jplace"

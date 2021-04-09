@@ -17,7 +17,6 @@ def get_seq_length(args):
         args.embedding_size = 2**math.floor(math.log2(10*num_nodes**(1/2)))
 
 def distance_portion(nodes1, nodes2, mode):
-    print('here')
     if len(nodes1.shape) == 1:
         nodes1 = nodes1.unsqueeze(0)
     if len(nodes2.shape) == 1:
@@ -110,7 +109,8 @@ def save_depp_dist(model, args):
     backbone_seq_file = args.backbone_seq_file
     query_seq_file = args.query_seq_file
     dis_file_root = os.path.join(args.outdir)
-    args.distance_ratio = float(1.0 / float(args.embedding_size) / 10 * float(args.distance_alpha))
+    # args.distance_ratio = float(1.0 / float(args.embedding_size) / 10 * float(args.distance_alpha))
+    args.distance_ratio = model.hparams.distance_ratio
     if not os.path.exists(dis_file_root):
         os.makedirs(dis_file_root)
 
