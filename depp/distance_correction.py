@@ -30,10 +30,13 @@ def main():
             method = set(f.read().split("\n"))
             method.remove('')
             method = method.intersection(s_set)
-        query_median = np.median(original_distance[np.array(method)].iloc[i])
-        ratio = true_max / (query_median + 1e-7)
-        # print(ratio)
-        b = original_distance.iloc[i].values[1:] * ratio
+        if method:
+            query_median = np.median(original_distance[np.array(method)].iloc[i])
+            ratio = true_max / (query_median + 1e-7)
+            # print(ratio)
+            b = original_distance.iloc[i].values[1:] * ratio
+        else:
+            b = original_distance.iloc[i].values[1:]
         seq_dict = dict(zip(s, b))
         data[seq_name] = seq_dict
     data = pd.DataFrame.from_dict(data, orient='index', columns=s)    

@@ -14,7 +14,7 @@ def get_seq_length(args):
     tree = dendropy.Tree.get(path=backbone_tree_file, schema='newick')
     num_nodes = len(tree.leaf_nodes())
     if args.embedding_size == -1:
-        args.embedding_size = 2**math.floor(math.log2(10*num_nodes**(1/2)))
+        args.embedding_size = 2 ** math.floor(math.log2(10 * num_nodes ** (1 / 2)))
 
 def distance_portion(nodes1, nodes2, mode):
     if len(nodes1.shape) == 1:
@@ -28,7 +28,8 @@ def distance_portion(nodes1, nodes2, mode):
     if mode == 'ms':
         return torch.sum((nodes1 - nodes2) ** 2, dim=-1)
     elif mode == 'L2':
-        return torch.sum((nodes1 - nodes2) ** 2, dim=-1)
+        # breakpoint()
+        return (torch.sum((nodes1 - nodes2) ** 2, dim=-1) + 1e-6).sqrt()
     elif mode == 'L1':
         return torch.sum(abs(nodes1 - nodes2), dim=-1)
     elif mode == 'cosine':
@@ -42,7 +43,7 @@ def distance(nodes1, nodes2, mode):
     # node2: backbone
     dist = []
     for i in range(math.ceil(len(nodes1) / 1000.0)):
-        dist.append(distance_portion(nodes1[i*1000: (i+1)*1000], nodes2, mode))
+        dist.append(distance_portion(nodes1[i * 1000: (i + 1) * 1000], nodes2, mode))
     return torch.cat(dist, dim=0)
 
 def mse_loss(model_dist, true_dist, weighted_method):
@@ -79,21 +80,26 @@ def mse_loss(model_dist, true_dist, weighted_method):
 def process_seq(self_seq, args, isbackbone):
     L = len(list(self_seq.values())[0])
     seq_tmp = {}
-    if args.replicate_seq and isbackbone:
+    raw_seqs = []
+    ks = []
+    if args.replicate_seq and (isbackbone or args.query_dist):
         for k in self_seq:
             seq_tmp[k.split('_')[0]] = torch.zeros(4, L)
     for k in self_seq:
         seq = np.zeros([4, L])
         raw_seq = np.array(self_seq[k])
+        raw_seqs.append(raw_seq.reshape(1, -1))
+        ks.append(k)
         seq[0][raw_seq == 'A'] = 1
         seq[1][raw_seq == 'C'] = 1
         seq[2][raw_seq == 'G'] = 1
         seq[3][raw_seq == 'T'] = 1
-        if args.replicate_seq and isbackbone:
+        seq[:, raw_seq == '-'] = args.gap_encode
+        if args.replicate_seq and (isbackbone or args.query_dist):
             seq_tmp[k.split('_')[0]] += torch.from_numpy(seq)
         else:
             seq_tmp[k] = torch.from_numpy(seq)
-    if args.replicate_seq and isbackbone:
+    if args.replicate_seq and (isbackbone or args.query_dist):
         for k in seq_tmp:
             seq_tmp[k] = seq_tmp[k].float() / (seq_tmp[k].sum(dim=0, keepdim=True) + 1e-8)
     names = []
@@ -111,14 +117,26 @@ def save_depp_dist(model, args):
     dis_file_root = os.path.join(args.outdir)
     # args.distance_ratio = float(1.0 / float(args.embedding_size) / 10 * float(args.distance_alpha))
     args.distance_ratio = model.hparams.distance_ratio
+    args.gap_encode = model.hparams.gap_encode
+    args.jc_correct = model.hparams.jc_correct
+    print('jc_correct', args.jc_correct)
+    if args.jc_correct:
+        args.jc_ratio = model.hparams.jc_ratio
     if not os.path.exists(dis_file_root):
         os.makedirs(dis_file_root)
 
     backbone_seq = SeqIO.to_dict(SeqIO.parse(backbone_seq_file, "fasta"))
     query_seq = SeqIO.to_dict(SeqIO.parse(query_seq_file, "fasta"))
 
-    backbone_seq_names, backbone_seq_tensor = process_seq(backbone_seq, args, isbackbone=True)
-    query_seq_names, query_seq_tensor = process_seq(query_seq, args, isbackbone=False)
+    if args.jc_correct:
+        backbone_seq_names, backbone_seq_names_raw, backbone_seq_tensor, backbone_raw_array = \
+            process_seq(backbone_seq, args, isbackbone=True)
+        query_seq_names, query_seq_names_raw, query_seq_tensor, query_raw_array = \
+            process_seq(query_seq, args, isbackbone=False)
+    else:
+        # breakpoint()
+        backbone_seq_names, backbone_seq_tensor = process_seq(backbone_seq, args, isbackbone=True)
+        query_seq_names, query_seq_tensor = process_seq(query_seq, args, isbackbone=False)
 
     for param in model.parameters():
         param.requires_grad = False
@@ -143,15 +161,19 @@ def save_depp_dist(model, args):
     query_dist = np.array(query_dist)
     query_dist[query_dist < 1e-3] = 0
     if args.weighted_method == 'square_root_fm':
-        data_origin = dict(zip(query_seq_names, list(query_dist**2)))
+        data_origin = dict(zip(query_seq_names, list(query_dist ** 2)))
     else:
         data_origin = dict(zip(query_seq_names, list(query_dist)))
 
     data_origin = pd.DataFrame.from_dict(data_origin, orient='index', columns=backbone_seq_names)
 
+    if args.query_dist:
+        idx = data_origin.index
+        data_origin = data_origin[idx]
+
     data_origin.to_csv(os.path.join(dis_file_root, f'depp.csv'), sep='\t')
     if not os.path.isdir(f'{args.outdir}/depp_tmp'):
         os.makedirs(f'{args.outdir}/depp_tmp')
     with open(f'{args.outdir}/depp_tmp/seq_name.txt', 'w') as f:
-        f.write("\n".join(query_seq_names)+'\n')
+        f.write("\n".join(query_seq_names) + '\n')
     print('original distanace matrix saved!')

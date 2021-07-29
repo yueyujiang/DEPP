@@ -2,6 +2,7 @@ import os
 import torch
 import treeswift
 import numpy as np
+import pandas as pd
 from torch.utils.data import Dataset
 from operator import itemgetter
 from Bio import SeqIO
@@ -29,19 +30,25 @@ class data(Dataset):
             self.distance_matrix = tree.distance_matrix(leaf_labels=True)
             for key in self.distance_matrix:
                 self.distance_matrix[key][key] = 0
+            self.distance_matrix = pd.DataFrame.from_dict(self.distance_matrix)
             print('Finish distance matrix calculation!')
 
         seq_tmp = {}
+        raw_seqs = []
+        ks = []
         if args.replicate_seq:
             for k in self_seq:
                 seq_tmp[k.split('_')[0]] = torch.zeros(4, L)
         for k in self_seq:
             seq = np.zeros([4, L])
             raw_seq = np.array(self_seq[k])
+            raw_seqs.append(raw_seq.reshape(1, -1))
+            ks.append(k)
             seq[0][raw_seq == 'A'] = 1
             seq[1][raw_seq == 'C'] = 1
             seq[2][raw_seq == 'G'] = 1
             seq[3][raw_seq == 'T'] = 1
+            seq[:, raw_seq == '-'] = args.gap_encode
             if args.replicate_seq:
                 seq_tmp[k.split('_')[0]] += torch.from_numpy(seq)
             else:
@@ -53,10 +60,11 @@ class data(Dataset):
         self.nodes = list(self.seq.keys())
 
     def true_distance(self, nodes1, nodes2):
-        gt_distance_list = itemgetter(*nodes1)(self.distance_matrix)
-        gt_distance = [torch.tensor(itemgetter(*nodes2)(item)).view(1, len(nodes2)) for item in gt_distance_list]
-        gt_distance = torch.cat(gt_distance, dim=0)
-        return gt_distance
+        # gt_distance_list = itemgetter(*nodes1)(self.distance_matrix)
+        # gt_distance = [torch.tensor(itemgetter(*nodes2)(item)).view(1, len(nodes2)) for item in gt_distance_list]
+        # gt_distance = torch.cat(gt_distance, dim=0)
+        gt_distance = self.distance_matrix.loc[nodes1][nodes2]
+        return torch.from_numpy(gt_distance.values)
 
     def __getitem__(self, idx):
         sample = {}

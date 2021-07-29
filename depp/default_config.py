@@ -38,7 +38,9 @@ default_config = \
 'model_path': '',
 'outdir': 'depp_distance',
 'num_worker': 4,
-'replicate_seq': False}
+'replicate_seq': False,
+ 'gap_encode': 0.25,
+ 'jc_correct': False}
 
 #def get_cfg_defaults():
 #    """Get a yacs CfgNode object with default values for my_project."""

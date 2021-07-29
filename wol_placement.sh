@@ -26,9 +26,9 @@ then
 #    echo $f
     if [ -z "${debug+x}" ]
     then
-      run_upp.sh ${f} ${accessory_dir} ${query_dir} ${cores} > /dev/null 2>&1 &
+      run_upp.sh ${f} ${accessory_dir} ${query_dir} ${cores} > /dev/null 2>&1
     else
-      run_upp.sh ${f} ${accessory_dir} ${query_dir} ${cores} &
+      run_upp.sh ${f} ${accessory_dir} ${query_dir} ${cores}
     fi
   done
   wait
@@ -44,9 +44,9 @@ then
     f="${f%_*}"
     if [ -z "${debug+x}" ]
     then
-      distance_depp.sh -q ${query_dir}/${f}_aligned.fa -b ${accessory_dir}/${f}.fa -m ${accessory_dir}/${f}.ckpt -t ${accessory_dir}/wol.nwk -o ${out_dir}/${f} > /dev/null 2>&1 &
+      distance_depp.sh -q ${query_dir}/${f}_aligned.fa -b ${accessory_dir}/${f}.fa -m ${accessory_dir}/${f}.ckpt -t ${accessory_dir}/wol.nwk -o ${out_dir}/${f} > /dev/null 2>&1
     else
-      distance_depp.sh -q ${query_dir}/${f}_aligned.fa -b ${accessory_dir}/${f}.fa -m ${accessory_dir}/${f}.ckpt -t ${accessory_dir}/wol.nwk -o ${out_dir}/${f} &
+      distance_depp.sh -q ${query_dir}/${f}_aligned.fa -b ${accessory_dir}/${f}.fa -m ${accessory_dir}/${f}.ckpt -t ${accessory_dir}/wol.nwk -o ${out_dir}/${f}
     fi
   done
   wait
@@ -58,9 +58,9 @@ then
     f="${f%_*}"
     if [ -z "${debug+x}" ]
     then
-      distance_depp.sh -q ${query_dir}/${f}_aligned.fa -b ${accessory_dir}/${f}.fa -m ${accessory_dir}/${f}.ckpt -t ${accessory_dir}/wol.nwk -o ${out_dir}/${f} -r True > /dev/null 2>&1 &
+      distance_depp.sh -q ${query_dir}/${f}_aligned.fa -b ${accessory_dir}/${f}.fa -m ${accessory_dir}/${f}.ckpt -t ${accessory_dir}/wol.nwk -o ${out_dir}/${f} -r True > /dev/null 2>&1
     else
-      distance_depp.sh -q ${query_dir}/${f}_aligned.fa -b ${accessory_dir}/${f}.fa -m ${accessory_dir}/${f}.ckpt -t ${accessory_dir}/wol.nwk -o ${out_dir}/${f} -r True &
+      distance_depp.sh -q ${query_dir}/${f}_aligned.fa -b ${accessory_dir}/${f}.fa -m ${accessory_dir}/${f}.ckpt -t ${accessory_dir}/wol.nwk -o ${out_dir}/${f} -r True
     fi
   done
   wait
@@ -73,9 +73,9 @@ else
     f="${f%.*}"
     if [ -z "${debug+x}" ]
     then
-      distance_depp.sh -q ${query_dir}/${f}.fa -b ${accessory_dir}/${f}.fa -m ${accessory_dir}/${f}.ckpt -t ${accessory_dir}/wol.nwk -o ${out_dir}/${f} > /dev/null 2>&1 &
+      distance_depp.sh -q ${query_dir}/${f}.fa -b ${accessory_dir}/${f}.fa -m ${accessory_dir}/${f}.ckpt -t ${accessory_dir}/wol.nwk -o ${out_dir}/${f} > /dev/null 2>&1
     else
-      distance_depp.sh -q ${query_dir}/${f}.fa -b ${accessory_dir}/${f}.fa -m ${accessory_dir}/${f}.ckpt -t ${accessory_dir}/wol.nwk -o ${out_dir}/${f} &
+      distance_depp.sh -q ${query_dir}/${f}.fa -b ${accessory_dir}/${f}.fa -m ${accessory_dir}/${f}.ckpt -t ${accessory_dir}/wol.nwk -o ${out_dir}/${f}
     fi
   done
   wait
@@ -87,9 +87,9 @@ else
     f="${f%.*}"
     if [ -z "${debug+x}" ]
     then
-      distance_depp.sh -q ${query_dir}/${f}.fa -b ${accessory_dir}/${f}.fa -m ${accessory_dir}/${f}.ckpt -t ${accessory_dir}/wol.nwk -o ${out_dir}/${f} -r True> /dev/null 2>&1 &
+      distance_depp.sh -q ${query_dir}/${f}.fa -b ${accessory_dir}/${f}.fa -m ${accessory_dir}/${f}.ckpt -t ${accessory_dir}/wol.nwk -o ${out_dir}/${f} -r True> /dev/null 2>&1
     else
-      distance_depp.sh -q ${query_dir}/${f}.fa -b ${accessory_dir}/${f}.fa -m ${accessory_dir}/${f}.ckpt -t ${accessory_dir}/wol.nwk -o ${out_dir}/${f} -r True &
+      distance_depp.sh -q ${query_dir}/${f}.fa -b ${accessory_dir}/${f}.fa -m ${accessory_dir}/${f}.ckpt -t ${accessory_dir}/wol.nwk -o ${out_dir}/${f} -r True
     fi
   done
   wait

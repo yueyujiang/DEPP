@@ -1,4 +1,5 @@
 import torch
+import math
 import torch.nn as nn
 from depp import submodule
 from depp import data
@@ -7,6 +8,7 @@ from pytorch_lightning.core.lightning import LightningModule
 from torch.utils.data import DataLoader
 from typing import List, Dict, Optional, Callable, Union
 from torch.optim.optimizer import Optimizer
+import math
 
 
 class encoder(nn.Module):
@@ -49,7 +51,7 @@ class model(LightningModule):
         self.save_hyperparameters(self.hparams)
         self.encoder = encoder(self.hparams)
         self.channel = 4
-        self.hparams.distance_ratio = float(1.0 / float(self.hparams.embedding_size) / 10 * float(self.hparams.distance_alpha))
+        self.hparams.distance_ratio = math.sqrt(float(1.0 / float(self.hparams.embedding_size) / 10 * float(self.hparams.distance_alpha)))
 
         self.dis_loss_w = 100
         self.train_loss = []
@@ -71,8 +73,10 @@ class model(LightningModule):
 
         distance = utils.distance(encoding, encoding.detach(), self.hparams.distance_mode) * self.hparams.distance_ratio
 
-        dis_loss = utils.mse_loss(distance, gt_distance, self.hparams.weighted_method)
+        not_self = torch.ones_like(distance)
+        not_self[torch.arange(0, len(distance)), torch.arange(0, len(distance))] = 0
 
+        dis_loss = utils.mse_loss(distance[not_self == 1], gt_distance[not_self == 1], self.hparams.weighted_method)
         loss = self.dis_loss_w * dis_loss * self.hparams.dis_loss_ratio
         self.val_loss += loss
 
