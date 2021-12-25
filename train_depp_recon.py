@@ -1,7 +1,7 @@
-#!/home/y5jiang/miniconda3/envs/std/bin/python
+#!/usr/bin/python
 
 import os
-from depp import Model_pl
+from depp import Model_recon
 from depp import default_config
 import pkg_resources
 
@@ -13,8 +13,8 @@ from pytorch_lightning.loggers import TensorBoardLogger
 from omegaconf import OmegaConf
 
 
-#os.environ['OMP_NUM_THREADS'] = '1'
-#os.environ['MKL_NUM_THREADS'] = '1'
+os.environ['OMP_NUM_THREADS'] = '1'
+os.environ['MKL_NUM_THREADS'] = '1'
 
 def main():
     args_base = OmegaConf.create(default_config.default_config)
@@ -31,9 +31,10 @@ def main():
     args = OmegaConf.merge(args_base, args_cli)
 
     model_dir = args.model_dir
-    os.makedirs(model_dir, exist_ok=True)
+    if not os.path.isdir(model_dir):
+        os.makedirs(model_dir)
 
-    model = Model_pl.model(args=args)
+    model = Model_recon.model(args=args)
 
     early_stop_callback = EarlyStopping(
         monitor='val_loss',
@@ -62,7 +63,8 @@ def main():
             gradient_clip_val=args.cp,
             benchmark=True,
             callbacks=[early_stop_callback],
-            checkpoint_callback=checkpoint_callback
+            checkpoint_callback=checkpoint_callback,
+            # reload_dataloaders_every_epoch=True
         )
     else:
         trainer = pl.Trainer(
@@ -75,7 +77,8 @@ def main():
             gradient_clip_val=args.cp,
             benchmark=True,
             callbacks=[early_stop_callback],
-            checkpoint_callback=checkpoint_callback
+            checkpoint_callback=checkpoint_callback,
+            # reload_dataloaders_every_epoch=True
         )
 
     trainer.fit(model)

@@ -44,9 +44,9 @@ then
     f="${f%_*}"
     if [ -z "${debug+x}" ]
     then
-      distance_depp.sh -q ${query_dir}/${f}_aligned.fa -b ${accessory_dir}/${f}.fa -m ${accessory_dir}/${f}.ckpt -t ${accessory_dir}/wol.nwk -o ${out_dir}/${f} > /dev/null 2>&1
+      depp_distance.py query_seq_file=${query_dir}/${f}_aligned.fa backbone_seq_file=${accessory_dir}/${f}_a.fasta model_path=${accessory_dir}/${f}.ckpt outdir=${out_dir}/${f} > /dev/null 2>&1
     else
-      distance_depp.sh -q ${query_dir}/${f}_aligned.fa -b ${accessory_dir}/${f}.fa -m ${accessory_dir}/${f}.ckpt -t ${accessory_dir}/wol.nwk -o ${out_dir}/${f}
+      depp_distance.py query_seq_file=${query_dir}/${f}_aligned.fa backbone_seq_file=${accessory_dir}/${f}_a.fasta model_path=${accessory_dir}/${f}.ckpt outdir=${out_dir}/${f}
     fi
   done
   wait
@@ -58,9 +58,9 @@ then
     f="${f%_*}"
     if [ -z "${debug+x}" ]
     then
-      distance_depp.sh -q ${query_dir}/${f}_aligned.fa -b ${accessory_dir}/${f}.fa -m ${accessory_dir}/${f}.ckpt -t ${accessory_dir}/wol.nwk -o ${out_dir}/${f} -r True > /dev/null 2>&1
+      depp_distance.py query_seq_file=${query_dir}/${f}_aligned.fa backbone_seq_file=${accessory_dir}/${f}_a.fasta model_path=${accessory_dir}/${f}.ckpt outdir=${out_dir}/${f} replicate=True > /dev/null 2>&1
     else
-      distance_depp.sh -q ${query_dir}/${f}_aligned.fa -b ${accessory_dir}/${f}.fa -m ${accessory_dir}/${f}.ckpt -t ${accessory_dir}/wol.nwk -o ${out_dir}/${f} -r True
+      depp_distance.py query_seq_file=${query_dir}/${f}_aligned.fa backbone_seq_file=${accessory_dir}/${f}_a.fasta model_path=${accessory_dir}/${f}.ckpt outdir=${out_dir}/${f} replicate=True
     fi
   done
   wait
@@ -73,9 +73,9 @@ else
     f="${f%.*}"
     if [ -z "${debug+x}" ]
     then
-      distance_depp.sh -q ${query_dir}/${f}.fa -b ${accessory_dir}/${f}.fa -m ${accessory_dir}/${f}.ckpt -t ${accessory_dir}/wol.nwk -o ${out_dir}/${f} > /dev/null 2>&1
+      depp_distance.py query_seq_file=${query_dir}/${f}.fa backbone_seq_file=${accessory_dir}/${f}_a.fasta model_path=${accessory_dir}/${f}.ckpt outdir=${out_dir}/${f} > /dev/null 2>&1
     else
-      distance_depp.sh -q ${query_dir}/${f}.fa -b ${accessory_dir}/${f}.fa -m ${accessory_dir}/${f}.ckpt -t ${accessory_dir}/wol.nwk -o ${out_dir}/${f}
+      depp_distance.py query_seq_file=${query_dir}/${f}.fa backbone_seq_file=${accessory_dir}/${f}_a.fasta model_path=${accessory_dir}/${f}.ckpt outdir=${out_dir}/${f}
     fi
   done
   wait
@@ -87,9 +87,9 @@ else
     f="${f%.*}"
     if [ -z "${debug+x}" ]
     then
-      distance_depp.sh -q ${query_dir}/${f}.fa -b ${accessory_dir}/${f}.fa -m ${accessory_dir}/${f}.ckpt -t ${accessory_dir}/wol.nwk -o ${out_dir}/${f} -r True> /dev/null 2>&1
+      depp_distance.py query_seq_file=${query_dir}/${f}.fa backbone_seq_file=${accessory_dir}/${f}_a.fasta model_path=${accessory_dir}/${f}.ckpt outdir=${out_dir}/${f} replicate=True> /dev/null 2>&1
     else
-      distance_depp.sh -q ${query_dir}/${f}.fa -b ${accessory_dir}/${f}.fa -m ${accessory_dir}/${f}.ckpt -t ${accessory_dir}/wol.nwk -o ${out_dir}/${f} -r True
+      depp_distance.py query_seq_file=${query_dir}/${f}.fa backbone_seq_file=${accessory_dir}/${f}_a.fasta model_path=${accessory_dir}/${f}.ckpt outdir=${out_dir}/${f} replicate=True
     fi
   done
   wait
@@ -106,14 +106,14 @@ then
     for f in ${query_dir}/p*aligned.fa; do
         f=$(basename -- "$f")
         f="${f%_*}"
-        run_apples.py -d ${out_dir}/${f}/depp_correction.csv -t ${accessory_dir}/wol.nwk -o ${out_dir}/summary/${f}_placement.jplace -f 0.25 -b 25 > /dev/null 2>&1
+        run_apples.py -d ${out_dir}/${f}/depp.csv -t ${accessory_dir}/wol.nwk -o ${out_dir}/summary/${f}_placement.jplace -f 0.25 -b 25 > /dev/null 2>&1
     done
     wait
   else
     for f in ${query_dir}/p*.fa; do
         f=$(basename -- "$f")
         f="${f%.*}"
-        run_apples.py -d ${out_dir}/${f}/depp_correction.csv -t ${accessory_dir}/wol.nwk -o ${out_dir}/summary/${f}_placement.jplace -f 0.25 -b 25 > /dev/null 2>&1
+        run_apples.py -d ${out_dir}/${f}/depp.csv -t ${accessory_dir}/wol.nwk -o ${out_dir}/summary/${f}_placement.jplace -f 0.25 -b 25 > /dev/null 2>&1
     done
     wait
   fi
@@ -127,7 +127,7 @@ then
     for f in ${query_dir}/16*aligned.fa; do
         f=$(basename -- "$f")
         f="${f%_*}"
-        run_apples.py -d ${out_dir}/${f}/depp_correction.csv -t ${accessory_dir}/wol.nwk -o ${out_dir}/summary/${f}_placement.jplace -f 0.25 -b 25 > /dev/null 2>&1
+        run_apples.py -d ${out_dir}/${f}/depp.csv -t ${accessory_dir}/wol.nwk -o ${out_dir}/summary/${f}_placement.jplace -f 0.25 -b 25 > /dev/null 2>&1
         if [ $count1 -ne 0 ]
         then
         merge_json.py --out-dir ${out_dir}
@@ -138,7 +138,7 @@ then
     for f in ${query_dir}/16*.fa; do
         f=$(basename -- "$f")
         f="${f%.*}"
-        run_apples.py -d ${out_dir}/${f}/depp_correction.csv -t ${accessory_dir}/wol.nwk -o ${out_dir}/summary/${f}_placement.jplace -f 0.25 -b 25 > /dev/null 2>&1
+        run_apples.py -d ${out_dir}/${f}/depp.csv -t ${accessory_dir}/wol.nwk -o ${out_dir}/summary/${f}_placement.jplace -f 0.25 -b 25 > /dev/null 2>&1
         if [ $count1 -ne 0 ]
         then
         merge_json.py --out-dir ${out_dir}

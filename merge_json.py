@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/home/y5jiang/miniconda3/envs/std/bin/python
 
 import json
 import argparse

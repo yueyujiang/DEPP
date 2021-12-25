@@ -1,9 +1,9 @@
 import os
 import torch
 import treeswift
+from depp import utils
 import numpy as np
 import pandas as pd
-from depp import utils
 from torch.utils.data import Dataset
 from operator import itemgetter
 from Bio import SeqIO
@@ -31,8 +31,11 @@ class data(Dataset):
                 self.distance_matrix[key][key] = 0
             self.distance_matrix = pd.DataFrame.from_dict(self.distance_matrix)
             print('Finish distance matrix calculation!')
-        self.nodes, self.seq = utils.process_seq(self_seq, args, True)
+
+        self.nodes, self.seq, self.mask = utils.process_seq(self_seq, args, True, True)
         self.seq = dict(zip(self.nodes, self.seq))
+        self.nongaps = dict(zip(self.nodes, self.mask))
+        self.num = len(self.nodes)
 
     def true_distance(self, nodes1, nodes2):
         # gt_distance_list = itemgetter(*nodes1)(self.distance_matrix)
@@ -47,7 +50,26 @@ class data(Dataset):
         seq = self.seq[node_name]
         sample['seqs'] = seq
         sample['nodes'] = node_name
+        nongap = torch.arange(seq.shape[-1])
+        nongap = nongap[self.nongaps[node_name][0]]
+        if len(nongap)/seq.shape[-1] > 0.3:
+            p = np.random.rand() * (len(nongap)/seq.shape[-1] - 0.3)
+            method = np.random.choice([0, 1])
+            size = int(p * seq.shape[-1])
+            if method == 1:
+                start = np.random.choice(nongap)
+                mask = torch.ones(1, seq.shape[-1])
+                mask[:, start: start + size] = 0
+            elif method == 0:
+                mask_site = np.random.choice(nongap, size=size)
+                mask = torch.ones(1, seq.shape[-1])
+                mask[:, mask_site] = 0
+        else:
+            mask = torch.ones_like(seq)
+        sample['masked_seqs'] = mask * seq
+        sample['mask'] = self.nongaps[node_name]
         return sample
 
     def __len__(self):
-        return len(self.nodes)
+        return self.num
+

@@ -1,4 +1,5 @@
 import torch
+import os
 import math
 import torch.nn as nn
 from depp import submodule
@@ -68,7 +69,6 @@ class model(LightningModule):
         device = seq.device
 
         encoding = self(seq)
-
         gt_distance = self.train_data.true_distance(nodes, nodes).to(device)
 
         distance = utils.distance(encoding, encoding.detach(), self.hparams.distance_mode) * self.hparams.distance_ratio
@@ -87,6 +87,13 @@ class model(LightningModule):
             outputs: Union[List[Dict[str, torch.Tensor]], List[List[Dict[str, torch.Tensor]]]]
     ) -> Dict[str, Dict[str, torch.Tensor]]:
         self.dis_loss_w = 100 + 1e-3 * (self.trainer.current_epoch - 1e4) * (self.trainer.current_epoch > 1e4)
+        if self.trainer.current_epoch % 100 == 0:
+            self.trainer.save_checkpoint(f'{self.hparams.model_dir}/epoch-{self.trainer.current_epoch}.pth')
+            if self.trainer.current_epoch > 0:
+                try:
+                    os.remove(f'{self.hparams.model_dir}/epoch-{self.trainer.current_epoch - 100}.pth')
+                except:
+                    pass
 
     def configure_optimizers(self):
         return torch.optim.RMSprop(self.parameters(), lr=self.hparams.lr)

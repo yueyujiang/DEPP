@@ -11,12 +11,12 @@ default_config = \
 
 'tau_pres_end_epoch': 5,
 'start_epoch': 0,
-'epoch': 3001,
+'epoch': 5001,
 'batch_size': 32,
 'cp': 1.0,
 'resblock_num': 1,
 
-'lr': 2e-4,
+'lr': 1e-4,
 'lr_decay': 2000,
 'backbone_tree_file': '',
 'backbone_seq_file': '',
@@ -33,14 +33,18 @@ default_config = \
 'plot_all_freqdistance_depp.sh -q ./seq/query_seq/query_seq.fa -b ./seq/backbone_seq/backbone_seq.fa -m model/epoch\=599.ckpt -t tree/backbone_tree/backbone.newick -o dis_mat/': 2000,
 'lr_update_freq': 100,
 'bar_update_freq': 1,
-'val_freq': 50,
-'patience': 5,
+'patience': 500000,
 'model_path': '',
 'outdir': 'depp_distance',
 'num_worker': 4,
 'replicate_seq': False,
- 'gap_encode': 0.25,
- 'jc_correct': False}
+'gap_encode': 0.25,
+'jc_correct': False,
+'recon_model_path': None,
+'query_dist': False,
+'val_freq': 50000000,
+'ae_train_epoch': 300,
+'seq_h_ratio': 0.5}
 
 #def get_cfg_defaults():
 #    """Get a yacs CfgNode object with default values for my_project."""

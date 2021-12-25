@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/home/y5jiang/miniconda3/envs/std/bin/python
 
 import pandas as pd
 import collections
@@ -29,7 +29,7 @@ types = 'bins'
 for i, d in enumerate(os.listdir(query_dir)):
     if not d.startswith(prefix):
         continue
-    file = f'{query_dir}/{d}/depp_correction.csv'
+    file = f'{query_dir}/{d}/depp.csv'
     if not os.path.isfile(file):
         continue
     a = pd.read_csv(file, sep='\t')
