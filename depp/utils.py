@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import torch
 import os
 import pandas as pd
@@ -248,6 +250,7 @@ def save_depp_dist(model, args, recon_model=None):
         recon_query_encodings = get_embeddings(query_seq_tensor, recon_model, query_mask)
 
     print(f'finish embedding calculation!')
+    print(f'calculating distance matrix...')
     t2 = time.time()
     #print('calculate embeddings', t2 - t1)
 

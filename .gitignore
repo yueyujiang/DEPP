@@ -15,3 +15,6 @@ depp.egg-info/
 depp1.egg-info/
 dist/
 upload.sh
+depp/*.split.py
+*/*bak*
+*swp

@@ -1,4 +1,4 @@
-#!/home/y5jiang/miniconda3/envs/std/bin/python
+#!/usr/bin/env python3
 
 import os
 from depp import Model_pl
@@ -62,7 +62,8 @@ def main():
             gradient_clip_val=args.cp,
             benchmark=True,
             callbacks=[early_stop_callback],
-            checkpoint_callback=checkpoint_callback
+            checkpoint_callback=checkpoint_callback,
+            # reload_dataloaders_every_epoch=True
         )
     else:
         trainer = pl.Trainer(
@@ -75,7 +76,8 @@ def main():
             gradient_clip_val=args.cp,
             benchmark=True,
             callbacks=[early_stop_callback],
-            checkpoint_callback=checkpoint_callback
+            checkpoint_callback=checkpoint_callback,
+            # reload_dataloaders_every_epoch=True
         )
 
     trainer.fit(model)

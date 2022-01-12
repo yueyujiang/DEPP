@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import torch
 import torch.distributions.normal as normal
 from torch import nn
