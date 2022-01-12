@@ -48,6 +48,14 @@ This command will give you a output directory named `depp_results`. items inside
 | **resblock_num**       | number of residual blocks (default: `1`)                                                                                |
 
 ### Calculating distance matrix
+`depp_distance.py backbone_seq_file=backbone/seq/file query_seq_file=query/seq/file model_path=model/path`
+| arguments              | descriptions                                                                                                            |
+|------------------------|-------------------------------------------------------------------------------------------------------------------------|
+| **backbone_seq_file**  | path to the backbone sequences file (in **fasta** format, **required**)                                                 |
+| **query_seq_file**  | path to the query sequences file (in **fasta** format, **required**)                                                 |
+| **model_path**               | path to the trained model (**required**)                                     |
+
+<!-- 
 `distance_depp.sh -q query/seq/file -b $backbone/seq/file -m model/path -t backbone/tree/file -o $outdir`
 | arguments             | descriptions                                                            |
 |-----------------------|-------------------------------------------------------------------------|
@@ -55,8 +63,8 @@ This command will give you a output directory named `depp_results`. items inside
 | **-b**                | path to the backbone sequences file (in **fasta** format, **required**) |
 | **-m**                | path to the depp model's parameters file (**required**)                 |
 | **-o**                | directory to store the output distance matrix (directory for output distance matrix, **required**) |
-| **-t**                | path to the backbone tree file (in **newick** format, **required**).    |
+| **-t**                | path to the backbone tree file (in **newick** format, **required**).    | -->
 
-Running the above command will give two distance matricies (`depp.csv` and `depp_correction.csv`), each as a tab delimited csv file with column and row headers. Rows represent query sequences and columns represent backbone sequences. `depp.csv` and `depp_correction.csv` represent distance_matrix before and after correction descripted in the paper.
+Running the above command will generate a distance matricies (`depp.csv`), as a tab delimited csv file with column and row headers. Rows represent query sequences and columns represent backbone sequences.
 
 Any questions? Please contact <y5jiang@eng.ucsd.edu>.
