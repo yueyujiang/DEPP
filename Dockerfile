@@ -1,5 +1,5 @@
-#FROM ubuntu:18.04
-FROM --platform=linux/amd64 ubuntu:18.04
+FROM ubuntu:18.04
+#FROM --platform=linux/amd64 ubuntu:18.04
 ENV PATH="/root/miniconda3/bin:${PATH}"
 ARG PATH="/root/miniconda3/bin:${PATH}"
 RUN apt-get update
