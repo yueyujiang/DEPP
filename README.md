@@ -5,7 +5,8 @@
 * [gappa](https://github.com/lczech/gappa) `conda install -c bioconda gappa`
 
 ## Installation
-`pip install depp`
+`pip install depp`  
+We also provide a Docker enviroment (Dockerfile) and a conda environment (depp_env.yml).
 
 ## Usage
 ### Sequences analysis using WoL data
