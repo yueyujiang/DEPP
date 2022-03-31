@@ -101,5 +101,6 @@ else
   depp-place-rRNA-one-type.sh -q ${query_file} -a ${accessory_dir} -o ${tmpdir} -t $data_type -x ${cores}
   comb_json.py --indir ${tmpdir} --outfile ${tmpdir}/placement.jplace
   cp ${tmpdir}/placement.jplace ${out_dir}/
+  cp ${tmpdir}/${data_type}_aligned.fa ${out_dir}/
   gappa examine graft --jplace-path ${tmpdir}/placement.jplace  --out-dir ${out_dir}/ --allow-file-overwriting > /dev/null 2>&1
 fi

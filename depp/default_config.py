@@ -44,7 +44,12 @@ default_config = \
 'query_dist': False,
 'val_freq': 50000000,
 'ae_train_epoch': 300,
-'seq_h_ratio': 0.5}
+'seq_h_ratio': 0.5,
+'backbone_emb': None,
+'backbone_gap': None,
+'backbone_id': None,
+'recon_backbone_emb':None
+}
 
 #def get_cfg_defaults():
 #    """Get a yacs CfgNode object with default values for my_project."""

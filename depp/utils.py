@@ -99,7 +99,7 @@ def process_seq(self_seq, args, isbackbone, need_mask=False):
     seqs[1][raw_seqs == 'C'] = 1
     seqs[2][raw_seqs == 'G'] = 1
     seqs[3][raw_seqs == 'T'] = 1
-
+u
     # R
     idx = raw_seqs == 'R'
     seqs[0][idx] = 1 / 2
@@ -228,10 +228,17 @@ def save_depp_dist(model, args, recon_model=None):
     else:
         # breakpoint()
         if not (recon_model is None):
-            backbone_seq_names, backbone_seq_tensor, backbone_mask = process_seq(backbone_seq, args, isbackbone=True, need_mask=True)
+            if (args.recon_backbone_emb is None) or (args.backbone_id is None) or (args.backbone_gap is None):
+                backbone_seq_names, backbone_seq_tensor, backbone_mask = process_seq(backbone_seq, args, isbackbone=True, need_mask=True)
+            else:
+                backbone_seq_names = torch.load(args.backbone_id)
+                backbone_mask = torch.load(args.backbone_gap)
             query_seq_names, query_seq_tensor, query_mask = process_seq(query_seq, args, isbackbone=False, need_mask=True)
         else:
-            backbone_seq_names, backbone_seq_tensor = process_seq(backbone_seq, args, isbackbone=True)
+            if (args.backbone_emb is None) or (args.backbone_id is None):
+                backbone_seq_names, backbone_seq_tensor = process_seq(backbone_seq, args, isbackbone=True)
+            else:
+                backbone_seq_names = torch.load(args.backbone_id)
             query_seq_names, query_seq_tensor = process_seq(query_seq, args, isbackbone=False)
 
     for param in model.parameters():
@@ -240,13 +247,19 @@ def save_depp_dist(model, args, recon_model=None):
     print(f'{len(backbone_seq_names)} backbone sequences')
     print(f'{len(query_seq_names)} query sequence(s)')
     print(f'calculating embeddings...')
-    backbone_encodings = get_embeddings(backbone_seq_tensor, model)
+    if (args.backbone_emb is None) or (args.backbone_id is None):
+        backbone_encodings = get_embeddings(backbone_seq_tensor, model)
+    else:
+        backbone_encodings = torch.load(args.backbone_emb)
     query_encodings = get_embeddings(query_seq_tensor, model)
     torch.save(query_encodings, f'{dis_file_root}/query_embeddings.pt')
     torch.save(query_seq_names, f'{dis_file_root}/query_names.pt')
 
     if not (recon_model is None):
-        recon_backbone_encodings = get_embeddings(backbone_seq_tensor, recon_model, backbone_mask)
+        if (args.recon_backbone_emb is None) or (args.backbone_id is None) or (args.backbone_gap is None):
+            recon_backbone_encodings = get_embeddings(backbone_seq_tensor, recon_model, backbone_mask)
+        else:
+            recon_backbone_encodings = torch.load(args.recon_backbone_emb)
         recon_query_encodings = get_embeddings(query_seq_tensor, recon_model, query_mask)
 
     print(f'finish embedding calculation!')

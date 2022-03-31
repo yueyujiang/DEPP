@@ -70,7 +70,8 @@ do
   mkdir ${upptmpdir}/tmp_result
   grep ">" ${i} | sed "s/^>//g" | sort > ${upptmpdir}/tmp_result/query_ids.txt
   upp_c=$c
-  run_upp.py -s ${i} -a ${accessory_dir}/${data_type}_a.fasta -t ${accessory_dir}/${data_type}.nwk -A 100 -d ${upptmpdir}/tmp_result -x $upp_c -p ${upptmpdir}/tmp 1>${tmpdir}/upp-out.log 2>${tmpdir}/upp-err.log
+#  awk "/^>/ {n++} n>8000 {exit} {print}" ${accessory_dir}/${data_type}_a.fasta > ${i}.backbone
+  run_upp.py -s ${i} -a ${accessory_dir}/${data_type}_a.fasta -t ${accessory_dir}/${data_type}.nwk -A 200 -d ${upptmpdir}/tmp_result -x $upp_c -p ${upptmpdir}/tmp 1>${tmpdir}/upp-out.log 2>${tmpdir}/upp-err.log
   grep -w -A 1 -f ${upptmpdir}/tmp_result/query_ids.txt ${upptmpdir}/tmp_result/output_alignment_masked.fasta --no-group-separator > ${upptmpdir}/aligned/${cnt}.fa
   cnt=$((cnt+1))
   rm -rf ${upptmpdir}/tmp
@@ -82,7 +83,7 @@ rm -rf $upptmpdir
 # split large file into multiple small ones
 N=$(grep ">" ${query_file} | wc -l)
 mkdir ${tmpdir}/split_seq
-awk -v size=5000 -v pre=${tmpdir}/split_seq/seq -v pad="${#N}" '
+awk -v size=500 -v pre=${tmpdir}/split_seq/seq -v pad="${#N}" '
    /^>/ { n++; if (n % size == 1) { close(fname); fname = sprintf("%s.%0" pad "d", pre, n) } }
       { print >> fname }
 ' ${tmpdir}/${data_type}_aligned.fa
@@ -95,7 +96,7 @@ function dist_place(){
   local accessory_dir=$3
   local data_type=$4
   local tmpdir=$5
-  depp_distance.py query_seq_file=$1 backbone_seq_file=${accessory_dir}/${data_type}_a.fasta outdir=../dist/$1 model_path=${accessory_dir}/${data_type}.ckpt replicate_seq=True recon_model_path=${accessory_dir}/${data_type}.recon.ckpt > /dev/null 2>&1
+  depp_distance.py query_seq_file=$1 backbone_seq_file=${accessory_dir}/${data_type}_a.fasta outdir=../dist/$1 model_path=${accessory_dir}/${data_type}.ckpt replicate_seq=True recon_model_path=${accessory_dir}/${data_type}.recon.ckpt backbone_emb=${accessory_dir}/${data_type}_emb.pt backbone_gap=${accessory_dir}/${data_type}_gap.pt backbone_id=${accessory_dir}/${data_type}_id.pt recon_backbone_emb=${accessory_dir}/${data_type}_emb.recon.pt> /dev/null 2>&1
   jplace_suffix="${seq_id##*.}"
   apples_core=`python -c "print(min($c,4))"`
   run_apples.py -d ../dist/$1/depp.csv -t ${accessory_dir}/wol.nwk -o ${tmpdir}/${data_type}_${jplace_suffix}.jplace -f 0 -b 5 -T $apples_core > /dev/null 2>&1
@@ -106,7 +107,7 @@ export -f dist_place
 
 echo "calculating distance matrix..."
 pushd ${tmpdir}/split_seq/ > /dev/null 2>&1
-depp_p=`python -c "print(max($c//4,1))"`
+depp_p=`python -c "print(max($c//2,1))"`
 ls -1 seq* | xargs -n1 -P$depp_p -I% bash -c 'dist_place "%" "${c}" "${accessory_dir}" "${data_type}" "${tmpdir}"'
 popd > /dev/null 2>&1
 
