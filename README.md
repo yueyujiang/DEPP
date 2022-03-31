@@ -5,35 +5,12 @@
 * [gappa](https://github.com/lczech/gappa) `conda install -c bioconda gappa`
 
 ## Installation
-`pip install depp`
+`pip install depp`  
+We also provide a Docker enviroment (Dockerfile) and a conda environment (depp_env.yml).  
+create conda environment
+`conda env create -f depp_env.yml`
 
 ## Usage
-### Sequences analysis using WoL data
-We provide the pretrained model for WoL marker genes and ASV data. Users can place the query sequences onto the WoL species tree directly using DEPP.  
-#### Preparation
-* Install UPP following the instructions [here](https://github.com/smirarab/sepp/blob/master/README.UPP.md), make sure that run_upp.py is executable.  
-* Sequences can be either unaligned ASV (16S) or unaligned MAG data or both.
-* Marker genes    
-  - Identify the marker genes using the protocols from [WoL project](https://biocore.github.io/wol/protocols/).  
-  - Rename each sequence file using the the format: <marker gene's id>.fa, e.g. p0000.fa, p0001.fa...  
-* ASV  
-  - Models of five types of 16S data is pretrained: full-length (~1600bp), V4 region (~250bp), V3+V4 region (~400bp), V4 100 (~100bp), V4 150 (~150bp). (If your ASV data is in the above five types, you can analyze your data directly. Otherwise, please align your sequences and then train your own model using the `train_depp.py` command)  
-  - Rename your ASV data using the following rules:  
-    - full-length 16S: 16s_full_length.fa  
-    - V3+V4 region: 16s_v3_v4.fa  
-    - V4 region: 16s_v4.fa  
-    - V4 100bp: 16s_v4_100.fa  
-    - V4 100bp: 16s_v4_150.fa  
-* Put all your query sequences files into one empty directory.  
-* Download the models and auxiliary data (accessory.tar.gz) from [here](https://tera-trees.com/data/depp/latest/) and unzip it.  
-
-#### Running
-`wol_placement.sh -q directory/to/query/sequences -o directory/for/output -a directory/to/auxiliary/data/accessory`  
-This command will give you a output directory named `depp_results`. items inside the directory include:  
-* `summary` directory:  
-  - placement tree in jplace and newick format for each sequences file.  
-  - placement tree in jplace and newick format that include all the queries from all the files provided  
-* each sequences file will have a directory which includes the distacne matrix from queries to backbone species.  
 
 ### Model training
 `train_depp.py backbone_tree_file=backbone/tree/file backbone_seq_file=backbone/seq/file gpus=$gpus_id`
@@ -66,5 +43,33 @@ This command will give you a output directory named `depp_results`. items inside
 | **-t**                | path to the backbone tree file (in **newick** format, **required**).    | -->
 
 Running the above command will generate a distance matricies (`depp.csv`), as a tab delimited csv file with column and row headers. Rows represent query sequences and columns represent backbone sequences.
+
+
+### Sequences analysis using WoL data
+We provide the pretrained model for WoL marker genes and ASV data. Users can place the query sequences onto the WoL species tree directly using DEPP.  
+#### Preparation
+* Install UPP following the instructions [here](https://github.com/smirarab/sepp/blob/master/README.UPP.md), make sure that run_upp.py is executable.  
+* Sequences can be either unaligned ASV (16S) or unaligned MAG data or both.
+* Marker genes    
+  - Identify the marker genes using the protocols from [WoL project](https://biocore.github.io/wol/protocols/).  
+  - Rename each sequence file using the the format: <marker gene's id>.fa, e.g. p0000.fa, p0001.fa...  
+* ASV  
+  - Models of five types of 16S data is pretrained: full-length (~1600bp), V4 region (~250bp), V3+V4 region (~400bp), V4 100 (~100bp), V4 150 (~150bp). (If your ASV data is in the above five types, you can analyze your data directly. Otherwise, please align your sequences and then train your own model using the `train_depp.py` command)  
+  - Rename your ASV data using the following rules:  
+    - full-length 16S: 16s_full_length.fa  
+    - V3+V4 region: 16s_v3_v4.fa  
+    - V4 region: 16s_v4.fa  
+    - V4 100bp: 16s_v4_100.fa  
+    - V4 100bp: 16s_v4_150.fa  
+* Put all your query sequences files into one empty directory.  
+* Download the models and auxiliary data (accessory.tar.gz) from [here](https://tera-trees.com/data/depp/latest/) and unzip it.  
+
+#### Running
+`wol_placement.sh -q directory/to/query/sequences -o directory/for/output -a directory/to/auxiliary/data/accessory`  
+This command will give you a output directory named `depp_results`. items inside the directory include:  
+* `summary` directory:  
+  - placement tree in jplace and newick format for each sequences file.  
+  - placement tree in jplace and newick format that include all the queries from all the files provided  
+* each sequences file will have a directory which includes the distacne matrix from queries to backbone species.  
 
 Any questions? Please contact <y5jiang@eng.ucsd.edu>.
