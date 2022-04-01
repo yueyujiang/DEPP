@@ -113,9 +113,9 @@ This command will give you a output directory named `depp_results`. items inside
 ``git clone https://github.com/yueyujiang/DEPP && cd DEPP``
   * Download accessory_test.tar.gz (using accessory_test.tar.gz is only for quick test, 
 for the whole dataset, please use [accessory.tar.gz](https://tera-trees.com/data/depp/latest/accessory.tar.gz)) and unzip it  
-    ``wget https://tera-trees.com/data/depp/latest/accessory_test.tar.gz && tar -xvf accessory.tar.gz -C ./``
+    ``wget https://tera-trees.com/data/depp/latest/accessory_test.tar.gz && tar -xvf accessory_test.tar.gz -C ./``
   * Running the following command for placement  
-``  wol_placement.sh -a accessory -q test/wol_placement/ -o ./``
+``  wol_placement.sh -a accessory_test -q test/wol_placement/ -o ./``
 3. The model is stored at  *./depp_results*  
 
 Any questions? Please contact <y5jiang@eng.ucsd.edu>.
