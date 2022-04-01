@@ -18,7 +18,7 @@
 * Pull docker image.   
 ``docker pull yueyujiang/depp_env:test``
 * Run docker image.   
-``docker run -it --rm -v $PWD:/depp_test -w /depp_test  yueyujiang/depp_env:test``.   
+``docker run -it --rm -v $PWD:/depp_test -w /depp_test  yueyujiang/depp_env:test``   
 This command will mount the current directory to */depp_test* in the container and set the working directory as */depp_test*
 
 ## Usage
@@ -28,7 +28,8 @@ This command will mount the current directory to */depp_test* in the container a
 This command saves the model every 100 epochs and trains *number_of_epochs* in total
 
 * **Example**  
-  * Clone the GitHub repository and navigate to the repo directory
+  * Clone the GitHub repository and navigate to the repo directory (This is for obtaining the testing data)
+``git clone https://github.com/yueyujiang/DEPP && cd DEPP``
   * Training the model (If GPUs are available, remove `gpus=0` in the following two command)
     * Training from scratch   
 ``train_depp.py backbone_seq_file=test/basic/backbone.fa backbone_tree_file=test/basic/backbone.nwk model_dir=test/basic/test_model gpus=0 epoch=1001``
@@ -51,7 +52,8 @@ This command saves the model every 100 epochs and trains *number_of_epochs* in t
 `depp_distance.py backbone_seq_file=backbone/seq/file query_seq_file=query/seq/file model_path=model/path`  
 Running the above command will generate a distance matrices (`depp.csv`), as a tab delimited csv file with column and row headers. Rows represent query sequences and columns represent backbone sequences.
 * **Example**  
-  * Clone the GitHub repository and navigate to the repo directory
+  * Clone the GitHub repository and navigate to the repo directory (This is for obtaining the testing data)
+``git clone https://github.com/yueyujiang/DEPP && cd DEPP``
   * Calculating the distance matrix  
 `` depp_distance.py backbone_seq_file=test/basic/backbone.fa query_seq_file=test/basic/query.fa model_path=test/basic/model.ckpt``
   * The model is stored at  *./depp_distance*  
@@ -106,7 +108,8 @@ This command will give you a output directory named `depp_results`. items inside
 * each sequences file will have a directory which includes the distance matrix from queries to backbone species.  
 
 * **Example**
-  * Clone the GitHub repository and navigate to the repo directory
+  * Clone the GitHub repository and navigate to the repo directory (This is for obtaining the testing data)
+``git clone https://github.com/yueyujiang/DEPP && cd DEPP``
   * Download accessory.tar.gz and unzip it  
     ``wget https://tera-trees.com/data/depp/latest/accessory.tar.gz && tar -xvf accessory.tar.gz -C ./``
   * Running the following command for placement  
