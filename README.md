@@ -100,7 +100,7 @@ We provide the pretrained model for WoL marker genes and ASV data. Users can pla
     at test/wol_placement in this repository**).  
 * Download the models and auxiliary data (accessory.tar.gz) from [here](https://tera-trees.com/data/depp/latest/) and unzip it.  
 
-#### Running
+#### Placement
 `wol_placement.sh -q directory/to/query/sequences -o directory/for/output -a directory/to/auxiliary/data/accessory`  
 This command will give you a output directory named `depp_results`. items inside the directory include:  
 * `summary` directory:  
