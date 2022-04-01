@@ -1,0 +1,10 @@
+name: depp_env
+channels:
+  - bioconda
+dependencies:
+  - python=3.8.12
+  - gappa=0.7.1
+  - newick_utils=1.6
+  - pip
+  - pip:
+    - depp==0.2.3
