@@ -29,13 +29,14 @@ This command saves the model every 100 epochs and trains *number_of_epochs* in t
   ``train_depp.py backbone_seq_file=test/basic/backbone.fa backbone_tree_file=test/basic/backbone.nwk model_dir=test/basic/test_model gpus=0 load_model=test/basic/model.ckpt epoch=1001``
   * The model is stored at *test/basic/test_model*
 * More  
+  
 | arguments              | descriptions                                                                                                            |
 |------------------------|-------------------------------------------------------------------------------------------------------------------------|
 | **backbone_tree_file** | path to the backbone tree file (in **newick** format, **required**)                                                     |
 | **backbone_seq_file**  | path to the backbone sequences file (in **fasta** format, **required**)                                                 |
 | **model_dir**          | directory to save model's parameters for later used (default `model`)                                                   |
 | **gpus**               | gpu ids (default `'[0]'`, **Don't** omit the quotes, i.e. use `gpus='[0]'` instead of `gpus=[0]`; **if no gpu is available**, use `gpus=0`; this version doesn't support multiple gpus temporarily, we will update it later)                                            |
-| **embedding_size**     | embedding size <a href="https://www.codecogs.com/eqnedit.php?latex=2^{\frac{1}{2}\lfloor{\log_2&space;(100&space;n)}\rfloor}" target="_blank"><img src="https://latex.codecogs.com/gif.latex?2^{\frac{1}{2}\lfloor{\log_2&space;(100&space;n)}\rfloor}" title="2^{\frac{1}{2}\lfloor{\log_2 (100 n)}\rfloor}" /></a>, n is the number of leaves in the backbone tree).                                                                                         |
+| **embedding_size**     | embedding size <a href="https://www.codecogs.com/eqnedit.php?latex=2^{\frac{1}{2}\lfloor{\log_2&space;(100&space;n)}\rfloor}" target="_blank"><img src="https://latex.codecogs.com/gif.latex?2^{\frac{1}{2}\lfloor{\log_2&space;(100&space;n)}\rfloor}" title="2^{\frac{1}{2}\lfloor{\log_2 (100 n)}\rfloor}" /></a>, n is the number of leaves in the backbone tree).                                                       |
 | **batch_size**         | batch size (default: `32`)                                                                                              |
 | **resblock_num**       | number of residual blocks (default: `1`)                                                                                |
 
@@ -49,6 +50,7 @@ Running the above command will generate a distance matrices (`depp.csv`), as a t
   * The model is stored at  *./depp_distance*  
 
 * More  
+  
 | arguments              | descriptions                                                                                                            |
 |------------------------|-------------------------------------------------------------------------------------------------------------------------|
 | **backbone_seq_file**  | path to the backbone sequences file (in **fasta** format, **required**)                                                 |
