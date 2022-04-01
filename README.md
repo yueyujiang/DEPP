@@ -68,7 +68,7 @@ Running the above command will generate a distance matrices (`depp.csv`), as a t
 | **-t**                | path to the backbone tree file (in **newick** format, **required**).    | -->
 
 
-### Advanced
+### Wol Placement
 #### Sequences analysis using WoL data
 We provide the pretrained model for WoL marker genes and ASV data. Users can place the query sequences onto the WoL species tree directly using DEPP.  
 #### Preparation
