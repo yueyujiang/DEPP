@@ -10,9 +10,16 @@
 
 ## Installation
 ### Using conda environment
+* Create conda environment.  
 ``wget https://tera-trees.com/data/depp/latest/depp_env.yml && conda env create -f depp_env.yml && rm depp_env.yml``
+* Activate conda environment.  
+``conda activate depp_env``
 ### Using docker image
+* Pull docker image.   
 ``docker pull yueyujiang/depp_env:test``
+* Run docker image.   
+``docker run -it --rm -v $PWD:/depp_test -w /depp_test  yueyujiang/depp_env:test``.   
+This command will mount the current directory to */depp_test* in the container and set the working directory as */depp_test*
 
 ## Usage
 ### Basic
