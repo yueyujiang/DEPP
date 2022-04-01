@@ -9,17 +9,18 @@
 [comment]: <> (* [gappa]&#40;https://github.com/lczech/gappa&#41; `conda install -c bioconda gappa`)
 
 ## Installation
-### Using conda environment
-* Create conda environment.  
-``wget https://tera-trees.com/data/depp/latest/depp_env.yml && conda env create -f depp_env.yml && rm depp_env.yml``
-* Activate conda environment.  
-``conda activate depp_env``
 ### Using docker image
 * Pull docker image.   
 ``docker pull yueyujiang/depp_env:test``
 * Run docker image.   
 ``docker run -it --rm -v $PWD:/depp_test -w /depp_test  yueyujiang/depp_env:test``   
 This command will mount the current directory to */depp_test* in the container and set the working directory as */depp_test*
+
+### Using conda environment
+* Create conda environment.  
+``wget https://tera-trees.com/data/depp/latest/depp_env.yml && conda env create -f depp_env.yml && rm depp_env.yml``
+* Activate conda environment.  
+``conda activate depp_env``
 
 ## Usage
 ### Basic
@@ -110,8 +111,9 @@ This command will give you a output directory named `depp_results`. items inside
 * **Example**
   * Clone the GitHub repository and navigate to the repo directory (This is for obtaining the testing data).  
 ``git clone https://github.com/yueyujiang/DEPP && cd DEPP``
-  * Download accessory.tar.gz and unzip it  
-    ``wget https://tera-trees.com/data/depp/latest/accessory.tar.gz && tar -xvf accessory.tar.gz -C ./``
+  * Download accessory_test.tar.gz (using accessory_test.tar.gz is only for quick test, 
+for the whole dataset, please use [accessory.tar.gz](https://tera-trees.com/data/depp/latest/accessory.tar.gz)) and unzip it  
+    ``wget https://tera-trees.com/data/depp/latest/accessory_test.tar.gz && tar -xvf accessory.tar.gz -C ./``
   * Running the following command for placement  
 ``  wol_placement.sh -a accessory -q test/wol_placement/ -o ./``
 3. The model is stored at  *./depp_results*  
