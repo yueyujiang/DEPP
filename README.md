@@ -57,7 +57,7 @@ Running the above command will generate a distance matrices (`depp.csv`), as a t
 ``git clone https://github.com/yueyujiang/DEPP && cd DEPP``
   * Calculating the distance matrix  
 `` depp_distance.py backbone_seq_file=test/basic/backbone.fa query_seq_file=test/basic/query.fa model_path=test/basic/model.ckpt``
-  * The model is stored at  *./depp_distance*  
+  * The distance matrix is stored at  *./depp_distance*  
 
 * More  
   
