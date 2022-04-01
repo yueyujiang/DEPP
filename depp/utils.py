@@ -49,9 +49,9 @@ def distance(nodes1, nodes2, mode):
     # node1: query
     # node2: backbone
     dist = torch.cat([torch.cat(
-        [distance_portion(nodes1[j * 1000: (j + 1) * 1000], nodes2[i * 1000: (i + 1) * 1000], mode) for j in
-         range(math.ceil(len(nodes1) / 1000))],
-        dim=0) for i in range(math.ceil(len(nodes2) / 1000))], dim=1)
+        [distance_portion(nodes1[j * 100: (j + 1) * 100], nodes2[i * 100: (i + 1) * 100], mode) for j in
+         range(math.ceil(len(nodes1) / 100))],
+        dim=0) for i in range(math.ceil(len(nodes2) / 100))], dim=1)
     return dist
 
 
@@ -99,7 +99,7 @@ def process_seq(self_seq, args, isbackbone, need_mask=False):
     seqs[1][raw_seqs == 'C'] = 1
     seqs[2][raw_seqs == 'G'] = 1
     seqs[3][raw_seqs == 'T'] = 1
-u
+
     # R
     idx = raw_seqs == 'R'
     seqs[0][idx] = 1 / 2
@@ -203,6 +203,7 @@ def save_depp_dist(model, args, recon_model=None):
     t1 = time.time()
     model.eval()
     print('processing data...')
+    args.replicate_seq = model.hparams.replicate_seq
     backbone_seq_file = args.backbone_seq_file
     query_seq_file = args.query_seq_file
     dis_file_root = os.path.join(args.outdir)
@@ -210,12 +211,12 @@ def save_depp_dist(model, args, recon_model=None):
     args.distance_ratio = model.hparams.distance_ratio
     args.gap_encode = model.hparams.gap_encode
     args.jc_correct = model.hparams.jc_correct
-    args.replicate_seq = model.hparams.replicate_seq
+    #args.replicate_seq = model.hparams.replicate_seq
     print('jc_correct', args.jc_correct)
     if args.jc_correct:
         args.jc_ratio = model.hparams.jc_ratio
     if not os.path.exists(dis_file_root):
-        os.makedirs(dis_file_root)
+        os.makedirs(dis_file_root, exist_ok=True)
 
     backbone_seq = SeqIO.to_dict(SeqIO.parse(backbone_seq_file, "fasta"))
     query_seq = SeqIO.to_dict(SeqIO.parse(query_seq_file, "fasta"))
@@ -252,8 +253,10 @@ def save_depp_dist(model, args, recon_model=None):
     else:
         backbone_encodings = torch.load(args.backbone_emb)
     query_encodings = get_embeddings(query_seq_tensor, model)
-    torch.save(query_encodings, f'{dis_file_root}/query_embeddings.pt')
-    torch.save(query_seq_names, f'{dis_file_root}/query_names.pt')
+    #torch.save(query_encodings, f'{dis_file_root}/query_embeddings.pt')
+    #torch.save(query_seq_names, f'{dis_file_root}/query_names.pt')
+    #torch.save(backbone_encodings, f'{dis_file_root}/backbone_embeddings.pt')
+    #torch.save(backbone_seq_names, f'{dis_file_root}/backbone_names.pt')
 
     if not (recon_model is None):
         if (args.recon_backbone_emb is None) or (args.backbone_id is None) or (args.backbone_gap is None):
@@ -261,6 +264,7 @@ def save_depp_dist(model, args, recon_model=None):
         else:
             recon_backbone_encodings = torch.load(args.recon_backbone_emb)
         recon_query_encodings = get_embeddings(query_seq_tensor, recon_model, query_mask)
+        torch.save(recon_backbone_encodings, f'{dis_file_root}/recon_backbone_embeddings.pt')
 
     print(f'finish embedding calculation!')
     print(f'calculating distance matrix...')

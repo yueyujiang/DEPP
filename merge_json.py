@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/calab_data/mirarab/home/yueyu/miniconda3/envs/depp_env/bin/python
 
 import json
 import argparse
@@ -29,4 +29,4 @@ with open(f'{output_dir}/marker_genes_placement.jplace', 'r') as f:
 tree1['placements'] += tree2['placements']
 
 with open(f'{output_dir}/mag_asv.jplace', 'w') as f:
-    json.dump(tree1, f)
+    json.dump(tree1, f, sort_keys=True, indent=4)

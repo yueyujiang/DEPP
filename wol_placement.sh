@@ -13,6 +13,19 @@ done
 out_dir=${out_dir}/depp_results
 count1=`ls -1 ${query_dir}/p* 2>/dev/null | wc -l`
 count2=`ls -1 ${query_dir}/16* 2>/dev/null | wc -l`
+
+if [ ! -d "${query_dir}" ];
+then
+	echo $query_dir not exist
+	exit 1
+fi
+
+if [ ! -d ${accessory_dir} ];
+then
+	echo ${accessory_dir} not exist
+	exit 1
+fi
+
 if [ -z "${aligned+x}" ]
 then
   echo "aligning sequences..."

@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/calab_data/mirarab/home/yueyu/miniconda3/envs/depp_env/bin/python
 
 import os
 from depp import Model_recon
@@ -32,9 +32,13 @@ def main():
 
     model_dir = args.model_dir
     if not os.path.isdir(model_dir):
-        os.makedirs(model_dir)
+        os.makedirs(model_dir, exist_ok=True)
 
-    model = Model_recon.model(args=args)
+    #model = Model_recon.model(args=args)
+    if args.load_model is not None:
+        model = Model_recon.model.load_from_checkpoint(args.load_model, args=args)
+    else:
+        model = Model_recon.model(args=args)
 
     early_stop_callback = EarlyStopping(
         monitor='val_loss',

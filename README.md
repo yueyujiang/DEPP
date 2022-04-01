@@ -1,19 +1,34 @@
 # DEPP
-## requirements
-* Python 3
-* [Newick Utilities](http://cegg.unige.ch/newick_utils) `conda install -c bioconda newick_utils`
-* [gappa](https://github.com/lczech/gappa) `conda install -c bioconda gappa`
+
+[comment]: <> (## requirements)
+
+[comment]: <> (* Python 3)
+
+[comment]: <> (* [Newick Utilities]&#40;http://cegg.unige.ch/newick_utils&#41; `conda install -c bioconda newick_utils`)
+
+[comment]: <> (* [gappa]&#40;https://github.com/lczech/gappa&#41; `conda install -c bioconda gappa`)
 
 ## Installation
-`pip install depp`  
-We also provide a Docker enviroment (Dockerfile) and a conda environment (depp_env.yml).  
-create conda environment
-`conda env create -f depp_env.yml`
+### Using conda environment
+``wget https://tera-trees.com/data/depp/latest/depp_env.yml && conda env create -f depp_env.yml && rm depp_env.yml``
+### Using docker image
+``docker pull yueyujiang/depp_env:test``
 
 ## Usage
+### Basic
+#### Model training
+`train_depp.py backbone_tree_file=backbone/tree/file backbone_seq_file=backbone/seq/file gpus=$gpus_id epochs=number_of_epoch`  
+This command saves the model every 100 epochs and trains *number_of_epochs* in total
 
-### Model training
-`train_depp.py backbone_tree_file=backbone/tree/file backbone_seq_file=backbone/seq/file gpus=$gpus_id`
+* **Example**  
+  * Clone the GitHub repository and navigate to the repo directory
+  * Training the model (If GPUs are available, remove `gpus=0` in the following two command)
+    * Training from scratch   
+``train_depp.py backbone_seq_file=test/basic/backbone.fa backbone_tree_file=test/basic/backbone.nwk model_dir=test/basic/test_model gpus=0 epoch=1001``
+     * Training from pretrained model  
+  ``train_depp.py backbone_seq_file=test/basic/backbone.fa backbone_tree_file=test/basic/backbone.nwk model_dir=test/basic/test_model gpus=0 load_model=test/basic/model.ckpt epoch=1001``
+  * The model is stored at *test/basic/test_model*
+* More  
 | arguments              | descriptions                                                                                                            |
 |------------------------|-------------------------------------------------------------------------------------------------------------------------|
 | **backbone_tree_file** | path to the backbone tree file (in **newick** format, **required**)                                                     |
@@ -24,8 +39,16 @@ create conda environment
 | **batch_size**         | batch size (default: `32`)                                                                                              |
 | **resblock_num**       | number of residual blocks (default: `1`)                                                                                |
 
-### Calculating distance matrix
-`depp_distance.py backbone_seq_file=backbone/seq/file query_seq_file=query/seq/file model_path=model/path`
+#### Calculating distance matrix
+`depp_distance.py backbone_seq_file=backbone/seq/file query_seq_file=query/seq/file model_path=model/path`  
+Running the above command will generate a distance matrices (`depp.csv`), as a tab delimited csv file with column and row headers. Rows represent query sequences and columns represent backbone sequences.
+* **Example**  
+  * Clone the GitHub repository and navigate to the repo directory
+  * Calculating the distance matrix  
+`` depp_distance.py backbone_seq_file=test/basic/backbone.fa query_seq_file=test/basic/query.fa model_path=test/basic/model.ckpt``
+  * The model is stored at  *./depp_distance*  
+
+* More  
 | arguments              | descriptions                                                                                                            |
 |------------------------|-------------------------------------------------------------------------------------------------------------------------|
 | **backbone_seq_file**  | path to the backbone sequences file (in **fasta** format, **required**)                                                 |
@@ -42,17 +65,17 @@ create conda environment
 | **-o**                | directory to store the output distance matrix (directory for output distance matrix, **required**) |
 | **-t**                | path to the backbone tree file (in **newick** format, **required**).    | -->
 
-Running the above command will generate a distance matricies (`depp.csv`), as a tab delimited csv file with column and row headers. Rows represent query sequences and columns represent backbone sequences.
 
-
-### Sequences analysis using WoL data
+### Advanced
+#### Sequences analysis using WoL data
 We provide the pretrained model for WoL marker genes and ASV data. Users can place the query sequences onto the WoL species tree directly using DEPP.  
 #### Preparation
-* Install UPP following the instructions [here](https://github.com/smirarab/sepp/blob/master/README.UPP.md), make sure that run_upp.py is executable.  
+* Install UPP following the instructions [here](https://github.com/smirarab/sepp/blob/master/README.UPP.md), make sure that run_upp.py is executable. 
+  This step is not required if you are using the docker image.
 * Sequences can be either unaligned ASV (16S) or unaligned MAG data or both.
 * Marker genes    
   - Identify the marker genes using the protocols from [WoL project](https://biocore.github.io/wol/protocols/).  
-  - Rename each sequence file using the the format: <marker gene's id>.fa, e.g. p0000.fa, p0001.fa...  
+  - Rename each sequence file using the format: <marker gene's id>.fa, e.g., p0000.fa, p0001.fa...  
 * ASV  
   - Models of five types of 16S data is pretrained: full-length (~1600bp), V4 region (~250bp), V3+V4 region (~400bp), V4 100 (~100bp), V4 150 (~150bp). (If your ASV data is in the above five types, you can analyze your data directly. Otherwise, please align your sequences and then train your own model using the `train_depp.py` command)  
   - Rename your ASV data using the following rules:  
@@ -61,15 +84,24 @@ We provide the pretrained model for WoL marker genes and ASV data. Users can pla
     - V4 region: 16s_v4.fa  
     - V4 100bp: 16s_v4_100.fa  
     - V4 100bp: 16s_v4_150.fa  
-* Put all your query sequences files into one empty directory.  
+* Put all your query sequences files into one empty directory (**Examples can be found 
+    at test/wol_placement in this repository**).  
 * Download the models and auxiliary data (accessory.tar.gz) from [here](https://tera-trees.com/data/depp/latest/) and unzip it.  
 
 #### Running
 `wol_placement.sh -q directory/to/query/sequences -o directory/for/output -a directory/to/auxiliary/data/accessory`  
 This command will give you a output directory named `depp_results`. items inside the directory include:  
 * `summary` directory:  
-  - placement tree in jplace and newick format for each sequences file.  
+  - placement tree in jplace and newick format for each sequence file.  
   - placement tree in jplace and newick format that include all the queries from all the files provided  
-* each sequences file will have a directory which includes the distacne matrix from queries to backbone species.  
+* each sequences file will have a directory which includes the distance matrix from queries to backbone species.  
+
+* **Example**
+  * Clone the GitHub repository and navigate to the repo directory
+  * Download accessory.tar.gz and unzip it  
+    ``wget https://tera-trees.com/data/depp/latest/accessory.tar.gz && tar -xvf accessory.tar.gz -C ./``
+  * Running the following command for placement  
+``  wol_placement.sh -a ~/Documents/jy/accessory -q test/wol_placement/ -o ./``
+3. The model is stored at  *./depp_results*  
 
 Any questions? Please contact <y5jiang@eng.ucsd.edu>.

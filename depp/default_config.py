@@ -48,7 +48,8 @@ default_config = \
 'backbone_emb': None,
 'backbone_gap': None,
 'backbone_id': None,
-'recon_backbone_emb':None
+'recon_backbone_emb':None,
+'load_model': None
 }
 
 #def get_cfg_defaults():

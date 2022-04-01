@@ -214,9 +214,10 @@ class model(LightningModule):
         self.dis_loss_w = 100 + 1e-3 * (self.trainer.current_epoch - 1e4) * (self.trainer.current_epoch > 1e4)
         if self.trainer.current_epoch % 100 == 0:
             self.trainer.save_checkpoint(f'{self.hparams.model_dir}/epoch-{self.trainer.current_epoch}.pth')
-            if self.trainer.current_epoch > 0:
-                os.remove(f'{self.hparams.model_dir}/epoch-{self.trainer.current_epoch - 100}.pth')
-        if self.trainer.current_epoch == self.hparams.ae_train_epoch - 1:
+            #if self.trainer.current_epoch > 0:
+            #    os.remove(f'{self.hparams.model_dir}/epoch-{self.trainer.current_epoch - 100}.pth')
+    def on_train_epoch_start(self):
+        if self.trainer.current_epoch == self.hparams.ae_train_epoch:
             self.seq_net.requires_grad_(False)
             self.train_data.train_encoder = False
 
@@ -271,6 +272,7 @@ class model(LightningModule):
 
         if self.trainer.global_step % self.hparams.lr_update_freq == 0:
 
+            #lr = 3e-5 + self.hparams.lr * (0.1 ** (epoch / self.hparams.lr_decay))
             lr = 3e-5 + self.hparams.lr * (0.1 ** (epoch / self.hparams.lr_decay))
             for param_group in optimizer.param_groups:
                 param_group['lr'] = lr

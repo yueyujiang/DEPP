@@ -4,8 +4,8 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setup(
-	name='depp',    # This is the name of your PyPI-package.
-        version='0.2.2',    # Update the version number for new releases
+	name='depp_test',    # This is the name of your PyPI-package.
+        version='0.0.3',    # Update the version number for new releases
         scripts=['train_depp.py',
                  #'distance_depp.sh',
                  'depp/depp_distance.py',

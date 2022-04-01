@@ -96,19 +96,33 @@ function dist_place(){
   local accessory_dir=$3
   local data_type=$4
   local tmpdir=$5
-  depp_distance.py query_seq_file=$1 backbone_seq_file=${accessory_dir}/${data_type}_a.fasta outdir=../dist/$1 model_path=${accessory_dir}/${data_type}.ckpt replicate_seq=True recon_model_path=${accessory_dir}/${data_type}.recon.ckpt backbone_emb=${accessory_dir}/${data_type}_emb.pt backbone_gap=${accessory_dir}/${data_type}_gap.pt backbone_id=${accessory_dir}/${data_type}_id.pt recon_backbone_emb=${accessory_dir}/${data_type}_emb.recon.pt> /dev/null 2>&1
+  local idx=$6
+  taskset -c $(((idx*4)%c))-$(((idx*4)%c+3)) depp_distance.py query_seq_file=$1 backbone_seq_file=${accessory_dir}/${data_type}_a.fasta outdir=../dist/$1 model_path=${accessory_dir}/${data_type}.ckpt replicate_seq=True recon_model_path=${accessory_dir}/${data_type}.recon.ckpt backbone_emb=${accessory_dir}/${data_type}_emb.pt backbone_gap=${accessory_dir}/${data_type}_gap.pt backbone_id=${accessory_dir}/${data_type}_id.pt recon_backbone_emb=${accessory_dir}/${data_type}_emb.recon.pt > /dev/null 2>&1
   jplace_suffix="${seq_id##*.}"
   apples_core=`python -c "print(min($c,4))"`
-  run_apples.py -d ../dist/$1/depp.csv -t ${accessory_dir}/wol.nwk -o ${tmpdir}/${data_type}_${jplace_suffix}.jplace -f 0 -b 5 -T $apples_core > /dev/null 2>&1
-  rm ../dist/$1/depp.csv
-  rm ../dist/$1/*.pt
+  taskset -c $(((idx*4)%c))-$(((idx*4)%c+3)) run_apples.py -d ../dist/$1/depp.csv -t ${accessory_dir}/wol.nwk -o ${tmpdir}/${data_type}_${jplace_suffix}.jplace -f 0 -b 5 -T $apples_core > /dev/null 2>&1
+  taskset -c $(((idx*4)%c))-$(((idx*4)%c+3)) rm ../dist/$1/depp.csv
+  taskset -c $(((idx*4)%c))-$(((idx*4)%c+3)) rm ../dist/$1/*.pt
 }
 export -f dist_place
 
 echo "calculating distance matrix..."
 pushd ${tmpdir}/split_seq/ > /dev/null 2>&1
-depp_p=`python -c "print(max($c//2,1))"`
-ls -1 seq* | xargs -n1 -P$depp_p -I% bash -c 'dist_place "%" "${c}" "${accessory_dir}" "${data_type}" "${tmpdir}"'
+depp_p=`python -c "print(max($c//4,1))"`
+#ls -1 seq* | xargs -n1 -P$depp_p -I% bash -c 'dist_place "%" "${c}" "${accessory_dir}" "${data_type}" "${tmpdir}"'
+n_seq=`ls -1 seq*|wc -l`
+num_jobs="\j"
+j=0
+for ((j=0; j<$((n_seq+1)); j++));
+do
+        while (( ${num_jobs@P} >= $depp_p ));
+        do
+                wait -n
+        done
+        ( s_tmp=`ls -1 seq*| sed "${j}q;d"` &&
+	dist_place "${s_tmp}" "${c}" "${accessory_dir}" "${data_type}" "${tmpdir}" "${j}" ) &
+done
+wait
 popd > /dev/null 2>&1
 
 
