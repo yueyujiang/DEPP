@@ -110,7 +110,7 @@ This command will give you a output directory named `depp_results`. items inside
 
 | arguments             | descriptions                                                            |
 |-----------------------|-------------------------------------------------------------------------|
-| **-q**                | path to the query sequences file (in **fasta** format, **required**)    |
+| **-q**                | path to the query directory (**required**)                              |
 | **-o**                | directory to store the outputs (**required**)                           |
 | **-a**                | path to accessory.tar.gz (**required**)                                 |
 
