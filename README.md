@@ -82,7 +82,7 @@ Running the above command will generate a distance matrices (`depp.csv`), as a t
 #### Sequences analysis using WoL data
 We provide the pretrained model for WoL marker genes and ASV data. Users can place the query sequences onto the WoL species tree directly using DEPP.  
 #### Preparation
-* Install UPP following the instructions [here](https://github.com/smirarab/sepp/blob/master/README.UPP.md), make sure that run_upp.py is executable. 
+* Install UPP following the instructions [here](https://github.com/smirarab/sepp/blob/master/README.UPP.md), make sure that run_upp.py is executable (try `run_upp.py -h`). 
   This step is not required if you are using the docker image.
 * Sequences can be either unaligned ASV (16S) or unaligned MAG data or both.
 * Marker genes    
@@ -106,7 +106,13 @@ This command will give you a output directory named `depp_results`. items inside
 * `summary` directory:  
   - placement tree in jplace and newick format for each sequence file.  
   - placement tree in jplace and newick format that include all the queries from all the files provided  
-* each sequences file will have a directory which includes the distance matrix from queries to backbone species.  
+* each sequences file will have a directory which includes the distance matrix from queries to backbone species.    
+
+| arguments             | descriptions                                                            |
+|-----------------------|-------------------------------------------------------------------------|
+| **-q**                | path to the query sequences file (in **fasta** format, **required**)    |
+| **-o**                | directory to store the outputs (**required**)                           |
+| **-a**                | path to accessory.tar.gz (**required**)                                 |
 
 * **Example**
   * Clone the GitHub repository and navigate to the repo directory (This is for obtaining the testing data).  
