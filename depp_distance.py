@@ -1,4 +1,4 @@
-#!/calab_data/mirarab/home/yueyu/miniconda3/envs/depp_env/bin/python
+#!/home/y5jiang/miniconda3/envs/depp_env/bin/python
 
 import os
 from depp import Model_pl
@@ -24,14 +24,30 @@ def main():
     # del args_cli['config_file']
     args = OmegaConf.merge(args_base, args_cli)
 
-    model = Model_pl.model.load_from_checkpoint(args.model_path)
     if args.recon_model_path:
-        recon_model = Model_recon.model.load_from_checkpoint(args.recon_model_path)
-        recon_model.is_training=False
+        if not os.path.isfile(args.recon_model_path):
+            print(f"{args.recon_model_path} not exist.")
+            recon_model = None
+        else:
+            recon_model = Model_recon.model.load_from_checkpoint(args.recon_model_path)
+            recon_model.is_training=False
     else:
         recon_model = None
 
-    utils.save_depp_dist(model, args, recon_model=recon_model)
+    if args.model_path:
+        if not os.path.isfile(args.model_path):
+            print(f"{args.model_path} not exist.")
+            model = None
+        else:
+            model = Model_pl.model.load_from_checkpoint(args.model_path)
+    else:
+        model = None
+
+    if model is None and recon_model is None:
+        print('No model exist. exit...')
+        return
+
+    utils.save_depp_dist(model=model, args=args, recon_model=recon_model)
 
 if __name__ == '__main__':
     main()

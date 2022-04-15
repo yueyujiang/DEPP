@@ -66,24 +66,24 @@ def mse_loss(model_dist, true_dist, weighted_method):
         weight = 1 / (true_dist + 1e-4)
         return ((model_dist - true_dist) ** 2 * weight).mean()
     elif weighted_method == 'square_root_fm':
-        true_dist = torch.sqrt(true_dist)
         weight = 1 / (true_dist + 1e-4) ** 2
+        true_dist = torch.sqrt(true_dist)
         return ((model_dist - true_dist) ** 2 * weight).mean()
     elif weighted_method == 'square_root_be':
-        true_dist = torch.sqrt(true_dist)
         weight = 1 / (true_dist + 1e-4)
+        true_dist = torch.sqrt(true_dist)
         return ((model_dist - true_dist) ** 2 * weight).mean()
     elif weighted_method == 'square_root_ols':
         true_dist = torch.sqrt(true_dist)
         weight = 1
         return ((model_dist - true_dist) ** 2 * weight).mean()
     elif weighted_method == 'square_root_sqrt':
-        true_dist = torch.sqrt(true_dist)
         weight = 1 / (torch.sqrt(true_dist) + 1e-4)
+        true_dist = torch.sqrt(true_dist)
         return ((model_dist - true_dist) ** 2 * weight).mean()
     elif weighted_method == 'square_root_four':
-        true_dist = torch.sqrt(true_dist)
         weight = 1 / (true_dist + 1e-4) ** 4
+        true_dist = torch.sqrt(true_dist)
         return ((model_dist - true_dist) ** 2 * weight).mean()
 
 
@@ -201,16 +201,23 @@ def get_embeddings(seqs, model, mask=None):
 
 def save_depp_dist(model, args, recon_model=None):
     t1 = time.time()
-    model.eval()
+    if model is not None:
+        model.eval()
+        args.replicate_seq = model.hparams.replicate_seq
+        args.distance_ratio = model.hparams.distance_ratio
+        args.gap_encode = model.hparams.gap_encode
+        args.jc_correct = model.hparams.jc_correct
+    elif recon_model is not None:
+        args.replicate_seq = recon_model.hparams.replicate_seq
+        args.distance_ratio = recon_model.hparams.distance_ratio
+        args.gap_encode = recon_model.hparams.gap_encode
+        args.jc_correct = recon_model.hparams.jc_correct
+
     print('processing data...')
-    args.replicate_seq = model.hparams.replicate_seq
     backbone_seq_file = args.backbone_seq_file
     query_seq_file = args.query_seq_file
     dis_file_root = os.path.join(args.outdir)
     # args.distance_ratio = float(1.0 / float(args.embedding_size) / 10 * float(args.distance_alpha))
-    args.distance_ratio = model.hparams.distance_ratio
-    args.gap_encode = model.hparams.gap_encode
-    args.jc_correct = model.hparams.jc_correct
     #args.replicate_seq = model.hparams.replicate_seq
     print('jc_correct', args.jc_correct)
     if args.jc_correct:
@@ -231,6 +238,7 @@ def save_depp_dist(model, args, recon_model=None):
         if not (recon_model is None):
             if (args.recon_backbone_emb is None) or (args.backbone_id is None) or (args.backbone_gap is None):
                 backbone_seq_names, backbone_seq_tensor, backbone_mask = process_seq(backbone_seq, args, isbackbone=True, need_mask=True)
+                torch.save(backbone_mask, f'{dis_file_root}/backbone_gap.pt')
             else:
                 backbone_seq_names = torch.load(args.backbone_id)
                 backbone_mask = torch.load(args.backbone_gap)
@@ -241,18 +249,22 @@ def save_depp_dist(model, args, recon_model=None):
             else:
                 backbone_seq_names = torch.load(args.backbone_id)
             query_seq_names, query_seq_tensor = process_seq(query_seq, args, isbackbone=False)
-
-    for param in model.parameters():
-        param.requires_grad = False
+    if model is not None:
+        for param in model.parameters():
+            param.requires_grad = False
+    if recon_model is not None:
+        for param in recon_model.parameters():
+            param.requires_grad = False
     print('finish data processing!')
     print(f'{len(backbone_seq_names)} backbone sequences')
     print(f'{len(query_seq_names)} query sequence(s)')
     print(f'calculating embeddings...')
-    if (args.backbone_emb is None) or (args.backbone_id is None):
-        backbone_encodings = get_embeddings(backbone_seq_tensor, model)
-    else:
-        backbone_encodings = torch.load(args.backbone_emb)
-    query_encodings = get_embeddings(query_seq_tensor, model)
+    if not (model is None):
+        if (args.backbone_emb is None) or (args.backbone_id is None):
+            backbone_encodings = get_embeddings(backbone_seq_tensor, model)
+        else:
+            backbone_encodings = torch.load(args.backbone_emb)
+        query_encodings = get_embeddings(query_seq_tensor, model)
     #torch.save(query_encodings, f'{dis_file_root}/query_embeddings.pt')
     #torch.save(query_seq_names, f'{dis_file_root}/query_names.pt')
     #torch.save(backbone_encodings, f'{dis_file_root}/backbone_embeddings.pt')
@@ -272,16 +284,20 @@ def save_depp_dist(model, args, recon_model=None):
     #print('calculate embeddings', t2 - t1)
 
     # query_dist = distance(query_encodings, backbone_encodings, args.distance_mode) * args.distance_ratio
-    query_dist = distance(query_encodings, backbone_encodings, args.distance_mode) * args.distance_ratio
-    if 'square_root' in args.weighted_method:
-        query_dist = query_dist ** 2
+    if model:
+        query_dist = distance(query_encodings, backbone_encodings, args.distance_mode) * args.distance_ratio
+        if 'square_root' in args.weighted_method:
+            query_dist = query_dist ** 2
 
     if recon_model:
         gap_portion = 1 - query_mask.int().sum(-1) / query_mask.shape[-1]
         recon_query_dist = distance(recon_query_encodings, recon_backbone_encodings, args.distance_mode) * args.distance_ratio
         if 'square_root' in args.weighted_method:
             recon_query_dist = recon_query_dist ** 2
-        query_dist = query_dist * (1 - gap_portion) + recon_query_dist * gap_portion
+        if model:
+            query_dist = query_dist * (1 - gap_portion) + recon_query_dist * gap_portion
+        else:
+            query_dist = recon_query_dist
 
     t3 = time.time()
     #print('calculate distance', t3 - t2)
