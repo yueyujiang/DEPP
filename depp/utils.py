@@ -66,24 +66,24 @@ def mse_loss(model_dist, true_dist, weighted_method):
         weight = 1 / (true_dist + 1e-4)
         return ((model_dist - true_dist) ** 2 * weight).mean()
     elif weighted_method == 'square_root_fm':
-        weight = 1 / (true_dist + 1e-4) ** 2
         true_dist = torch.sqrt(true_dist)
+        weight = 1 / (true_dist + 1e-4) ** 2
         return ((model_dist - true_dist) ** 2 * weight).mean()
     elif weighted_method == 'square_root_be':
-        weight = 1 / (true_dist + 1e-4)
         true_dist = torch.sqrt(true_dist)
+        weight = 1 / (true_dist + 1e-4)
         return ((model_dist - true_dist) ** 2 * weight).mean()
     elif weighted_method == 'square_root_ols':
         true_dist = torch.sqrt(true_dist)
         weight = 1
         return ((model_dist - true_dist) ** 2 * weight).mean()
     elif weighted_method == 'square_root_sqrt':
-        weight = 1 / (torch.sqrt(true_dist) + 1e-4)
         true_dist = torch.sqrt(true_dist)
+        weight = 1 / (torch.sqrt(true_dist) + 1e-4)
         return ((model_dist - true_dist) ** 2 * weight).mean()
     elif weighted_method == 'square_root_four':
-        weight = 1 / (true_dist + 1e-4) ** 4
         true_dist = torch.sqrt(true_dist)
+        weight = 1 / (true_dist + 1e-4) ** 4
         return ((model_dist - true_dist) ** 2 * weight).mean()
 
 

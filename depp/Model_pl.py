@@ -89,7 +89,7 @@ class model(LightningModule):
             outputs: Union[List[Dict[str, torch.Tensor]], List[List[Dict[str, torch.Tensor]]]]
     ) -> Dict[str, Dict[str, torch.Tensor]]:
         self.dis_loss_w = 100 + 1e-3 * (self.trainer.current_epoch - 1e4) * (self.trainer.current_epoch > 1e4)
-        if self.trainer.current_epoch % 100 == 0:
+        if self.trainer.current_epoch % 1000 == 0:
             self.trainer.save_checkpoint(f'{self.hparams.model_dir}/epoch-{self.trainer.current_epoch}.pth')
             if self.trainer.current_epoch > 0:
                 try:
@@ -118,7 +118,7 @@ class model(LightningModule):
 
     def val_dataloader(self):
         # TODO: do a real train/val split
-        self.train_data = data.data(self.hparams, calculate_distance_matrix=True)
+        self.train_data = data.data_mask(self.hparams, calculate_distance_matrix=True)
         loader = DataLoader(self.train_data,
                             batch_size=self.hparams.batch_size,
                             shuffle=False,

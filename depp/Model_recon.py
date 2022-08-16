@@ -192,7 +192,8 @@ class model(LightningModule):
                 wrong_site = (torch.argmax(reconseq[mask, :], dim=-1) != torch.argmax(seq[mask, :], dim=-1)).sum() / mask.sum()
                 self.wrong_site.append(wrong_site)
         else:
-            _, encoding = self(seq, mask=mask)
+            self.train_data.train_recon = False
+            _, encoding = self(masked_seq, mask=mask)
             gt_distance = self.train_data.true_distance(nodes, nodes).to(device)
 
             distance = utils.distance(encoding, encoding.detach(),
