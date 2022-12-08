@@ -4,9 +4,9 @@ import torch
 import os
 import math
 import torch.nn as nn
-from depp import submodule
-from depp import data_recon
-from depp import utils
+import submodule
+import data_recon
+import utils
 from pytorch_lightning.core.lightning import LightningModule
 from torch.utils.data import DataLoader
 from typing import List, Dict, Optional, Callable, Union
@@ -192,7 +192,8 @@ class model(LightningModule):
                 wrong_site = (torch.argmax(reconseq[mask, :], dim=-1) != torch.argmax(seq[mask, :], dim=-1)).sum() / mask.sum()
                 self.wrong_site.append(wrong_site)
         else:
-            _, encoding = self(seq, mask=mask)
+            self.train_data.train_recon = False
+            _, encoding = self(masked_seq, mask=mask)
             gt_distance = self.train_data.true_distance(nodes, nodes).to(device)
 
             distance = utils.distance(encoding, encoding.detach(),

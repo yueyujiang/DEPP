@@ -1,8 +1,8 @@
 #!/calab_data/mirarab/home/yueyu/miniconda3/envs/depp_env/bin/python
 
 import os
-from depp import Model_recon
-from depp import default_config
+import Model_recon
+import default_config
 import pkg_resources
 
 import pytorch_lightning as pl

@@ -4,7 +4,7 @@ default_config = \
 'summary_dir': 'summary',
 'model_dir': 'model',
 'distance_mode': 'L2',
-'embedding_size': -1,
+'embedding_size': None,
 'sequence_length': 0,
 'h_channel': 8,
 'beta_ratio': 50000,
@@ -18,11 +18,11 @@ default_config = \
 
 'lr': 1e-4,
 'lr_decay': 2000,
-'backbone_tree_file': '',
-'backbone_seq_file': '',
+'backbone_tree_file': None,
+'backbone_seq_file': None,
 'query_seq_file': '',
 'weighted_method': 'square_root_fm',
-'distance_alpha': 1e7,
+'distance_alpha': 1e5,
 'dis_loss_ratio': 1.0,
 'plot_freq': 1000,
 'save_data_freq': 1000,
@@ -31,7 +31,7 @@ default_config = \
 'stop_par': 200,
 'gpus': [0],
 'plot_all_freqdistance_depp.sh -q ./seq/query_seq/query_seq.fa -b ./seq/backbone_seq/backbone_seq.fa -m model/epoch\=599.ckpt -t tree/backbone_tree/backbone.newick -o dis_mat/': 2000,
-'lr_update_freq': 100,
+'lr_update_freq': 500,
 'bar_update_freq': 1,
 'patience': 500000,
 'model_path': '',
@@ -49,7 +49,14 @@ default_config = \
 'backbone_gap': None,
 'backbone_id': None,
 'recon_backbone_emb':None,
-'load_model': None
+'load_model': None,
+'add_random_mask': False,
+'get_representative_emb': False,
+'start_model_idx': -1,
+'only_class': False,
+'end_model_idx': None,
+'cluster_num': 1,
+'seqdir': None
 }
 
 #def get_cfg_defaults():

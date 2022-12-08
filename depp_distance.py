@@ -1,10 +1,10 @@
 #!/calab_data/mirarab/home/yueyu/miniconda3/envs/depp_env/bin/python
 
 import os
-from depp import Model_pl
-from depp import Model_recon
-from depp import utils
-from depp import default_config
+import Model_pl
+import Model_recon
+import utils
+import default_config
 from omegaconf import OmegaConf
 
 os.environ['OMP_NUM_THREADS'] = '1'

@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 
 import os
+import sys
+# import Model_pl
+from depp import Agg_model
 from depp import Model_pl
-from depp import Model_recon
 from depp import utils
 from depp import default_config
 from omegaconf import OmegaConf
@@ -23,15 +25,28 @@ def main():
     #     raise ValueError('exp_name cannot be empty without specifying a config file')
     # del args_cli['config_file']
     args = OmegaConf.merge(args_base, args_cli)
-
-    model = Model_pl.model.load_from_checkpoint(args.model_path)
-    if args.recon_model_path:
-        recon_model = Model_recon.model.load_from_checkpoint(args.recon_model_path)
-        recon_model.is_training=False
+    cluster_model = True
+    try:
+        model = Agg_model.model.load_from_checkpoint(args.model_path, load_model=False)
+    except:
+        cluster_model = False
+        try:
+            model = Model_pl.model.load_from_checkpoint(args.model_path, current_model=0)
+        except:
+            print(f'cannot load model {args.model_path}')
+            sys.exit()
+    # if args.recon_model_path:
+    #     recon_model = Model_recon.model.load_from_checkpoint(args.recon_model_path)
+    #     recon_model.is_training=False
+    # else:
+    #     recon_model = None
+    if cluster_model:
+        utils.save_depp_dist_cluster(model, args)
     else:
-        recon_model = None
+        utils.save_depp_dist(model, args)
 
-    utils.save_depp_dist(model, args, recon_model=recon_model)
+    if args.get_representative_emb:
+        utils.save_repr_emb(model, args)
 
 if __name__ == '__main__':
     main()
