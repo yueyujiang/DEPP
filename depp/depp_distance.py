@@ -2,6 +2,8 @@
 
 import os
 import sys
+import torch
+import numpy as np
 # import Model_pl
 from depp import Agg_model
 from depp import Model_pl
@@ -27,7 +29,12 @@ def main():
     args = OmegaConf.merge(args_base, args_cli)
     cluster_model = True
     try:
-        model = Agg_model.model.load_from_checkpoint(args.model_path, load_model=False)
+        if not torch.cuda.is_available():
+            m = torch.load(args.model_path, map_location=torch.device('cpu'))
+        else:
+            m = torch.load(args.model_path)
+        classifier_cluster_num = m['state_dict']['classifier.linear.bias'].shape[0]
+        model = Agg_model.model.load_from_checkpoint(args.model_path, load_model=False, classifier_cluster_num=classifier_cluster_num)
     except:
         cluster_model = False
         try:
@@ -41,7 +48,7 @@ def main():
     # else:
     #     recon_model = None
     if cluster_model:
-        utils.save_depp_dist_cluster(model, args)
+        utils.save_depp_dist_cluster(model, args, use_cluster=args.use_cluster)
     else:
         utils.save_depp_dist(model, args)
 

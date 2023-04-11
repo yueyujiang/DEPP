@@ -1,8 +1,6 @@
-#!/calab_data/mirarab/home/yueyu/miniconda3/envs/depp_env/bin/python
-
+#!/usr/bin/python
 import os
 import Model_pl
-import Model_recon
 import utils
 import default_config
 from omegaconf import OmegaConf
@@ -25,13 +23,7 @@ def main():
     args = OmegaConf.merge(args_base, args_cli)
 
     model = Model_pl.model.load_from_checkpoint(args.model_path)
-    if args.recon_model_path:
-        recon_model = Model_recon.model.load_from_checkpoint(args.recon_model_path)
-        recon_model.is_training=False
-    else:
-        recon_model = None
-
-    utils.save_depp_dist(model, args, recon_model=recon_model)
+    utils.save_depp_dist(model, args)
 
 if __name__ == '__main__':
     main()

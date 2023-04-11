@@ -87,12 +87,18 @@ cp ${query_file} ${tmpdir}/
 # split large file into multiple small ones
 N=$(grep ">" ${query_file} | wc -l)
 mkdir ${tmpdir}/split_seq
-awk -v size=20000 -v pre=${tmpdir}/split_seq/seq -v pad="${#N}" '
+awk -v size=2000 -v pre=${tmpdir}/split_seq/seq -v pad="${#N}" '
    /^>/ { n++; if (n % size == 1) { close(fname); fname = sprintf("%s.%0" pad "d", pre, n) } }
       { print >> fname }
 ' ${tmpdir}/${data_type}_aligned.fa
 
 # calculate distance
+if [[ "${data_type}" == "16s_full_length" ]];
+then
+  cores_per_job=16
+else
+  cores_per_job=8
+fi
 
 function dist_place(){
   local seq_id=$1
@@ -101,27 +107,27 @@ function dist_place(){
   local data_type=$4
   local tmpdir=$5
   local idx=$6
-  taskset -c $(((idx*2)%c))-$(((idx*2)%c+1)) depp_distance.py query_seq_file=$1 outdir=../dist/$1 model_path=${accessory_dir}/${data_type}.ckpt replicate_seq=True backbone_emb=${accessory_dir}/${data_type}_emb.pt backbone_id=${accessory_dir}/${data_type}_id.pt
+  taskset -c $(((idx*cores_per_job)%c))-$(((idx*cores_per_job)%c+cores_per_job-1)) depp_distance.py query_seq_file=$1 outdir=../dist/$1 model_path=${accessory_dir}/${data_type}.ckpt replicate_seq=True backbone_emb=${accessory_dir}/${data_type}_emb.pt backbone_id=${accessory_dir}/${data_type}_id.pt use_multi_class=True prob_thr=200
   jplace_suffix="${seq_id##*.}"
-  apples_core=`python -c "print(min($c,2))"`
+  apples_core=`python -c "print(min($c,$cores_per_job))"`
   mkdir ${tmpdir}/${data_type}_${jplace_suffix}
   for depp_dist_file in ../dist/$1/depp*csv;
   do
     depp_dist_idx=`basename $depp_dist_file`
     depp_dist_idx=${depp_dist_idx%%.*}
-    taskset -c $(((idx*2)%c))-$(((idx*2)%c+1)) run_apples.py -d $depp_dist_file -t ${accessory_dir}/wol.nwk -o ${tmpdir}/${data_type}_${jplace_suffix}/${data_type}_${jplace_suffix}_${depp_dist_idx}.jplace -f 0 -b 5 -T $apples_core
+    taskset -c $(((idx*cores_per_job)%c))-$(((idx*cores_per_job)%c+cores_per_job-1)) run_apples.py -d $depp_dist_file -t ${accessory_dir}/wol.nwk -o ${tmpdir}/${data_type}_${jplace_suffix}/${data_type}_${jplace_suffix}_${depp_dist_idx}.jplace -f 0 -b 5 -T $apples_core
   done
   cp ../dist/$1/entropy.txt ${tmpdir}/${data_type}_${jplace_suffix}_entropy.txt
-  taskset -c $(((idx*2)%c))-$(((idx*2)%c+1)) comb_json.py --indir ${tmpdir}/${data_type}_${jplace_suffix} --outfile ${tmpdir}/${data_type}_${jplace_suffix}.jplace
-  taskset -c $(((idx*2)%c))-$(((idx*2)%c+1)) rm -rf ../dist/$1
-  taskset -c $(((idx*2)%c))-$(((idx*2)%c+1)) rm -rf ${tmpdir}/${data_type}_${jplace_suffix}
+  taskset -c $(((idx*cores_per_job)%c))-$(((idx*cores_per_job)%c+cores_per_job-1)) comb_json.py --indir ${tmpdir}/${data_type}_${jplace_suffix} --outfile ${tmpdir}/${data_type}_${jplace_suffix}.jplace
+  taskset -c $(((idx*cores_per_job)%c))-$(((idx*cores_per_job)%c+cores_per_job-1)) rm -rf ../dist/$1
+  taskset -c $(((idx*cores_per_job)%c))-$(((idx*cores_per_job)%c+cores_per_job-1)) rm -rf ${tmpdir}/${data_type}_${jplace_suffix}
 #  taskset -c $(((idx*4)%c))-$(((idx*4)%c+3)) rm ../dist/$1/*.pt
 }
 export -f dist_place
 
 echo "calculating distance matrix..."
 pushd ${tmpdir}/split_seq/ > /dev/null 2>&1
-depp_p=`python -c "print(max($c//2,1))"`
+depp_p=`python -c "print(max($c//$cores_per_job,1))"`
 #ls -1 seq* | xargs -n1 -P$depp_p -I% bash -c 'dist_place "%" "${c}" "${accessory_dir}" "${data_type}" "${tmpdir}"'
 n_seq=`ls -1 seq*|wc -l`
 num_jobs="\j"

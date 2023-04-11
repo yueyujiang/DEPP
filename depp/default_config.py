@@ -56,7 +56,12 @@ default_config = \
 'only_class': False,
 'end_model_idx': None,
 'cluster_num': 1,
-'seqdir': None
+'seqdir': None,
+'use_cluster': None,
+'classifier_seqdir': None,
+'use_multi_class': None,
+'prob_thr': 5,
+'cluster_corr': None
 }
 
 #def get_cfg_defaults():

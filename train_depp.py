@@ -1,4 +1,4 @@
-#!/calab_data/mirarab/home/yueyu/miniconda3/envs/depp_env/bin/python
+#!/usr/bin/env python3
 
 import os
 from depp import Model_pl
@@ -67,20 +67,20 @@ def main():
                 gradient_clip_val=args.cp,
                 benchmark=True,
                 callbacks=[early_stop_callback],
-                checkpoint_callback=checkpoint_callback
+                enable_checkpointing=checkpoint_callback
             )
         else:
             classifier_trainer = pl.Trainer(
                 logger=False,
                 gpus=args.gpus,
                 # progress_bar_refresh_rate=args.bar_update_freq,
-                accelerator='ddp',
+                strategy='ddp',
                 check_val_every_n_epoch=args.val_freq,
                 max_epochs=args.classifier_epoch + 1,
                 gradient_clip_val=args.cp,
                 benchmark=True,
                 callbacks=[early_stop_callback],
-                checkpoint_callback=checkpoint_callback
+                enable_checkpointing=checkpoint_callback
             )
         model = Model_pl.model(args=args, current_model=-1)
         classifier_trainer.fit(model)
@@ -97,20 +97,20 @@ def main():
                 gradient_clip_val=args.cp,
                 benchmark=True,
                 callbacks=[early_stop_callback],
-                checkpoint_callback=checkpoint_callback
+                enable_checkpointing=checkpoint_callback
             )
         else:
             trainer = pl.Trainer(
                 logger=False,
                 gpus=args.gpus,
                 # progress_bar_refresh_rate=args.bar_update_freq,
-                accelerator='ddp',
+                strategy='ddp',
                 check_val_every_n_epoch=args.val_freq,
                 max_epochs=args.epoch + 1,
                 gradient_clip_val=args.cp,
                 benchmark=True,
                 callbacks=[early_stop_callback],
-                checkpoint_callback=checkpoint_callback
+                enable_checkpointing=checkpoint_callback
             )
 
         model = Model_pl.model(args=args, current_model=model_idx)

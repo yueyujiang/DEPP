@@ -1,6 +1,6 @@
 #!/bin/bash
 
-while getopts q:a:o:t:x:d:s: flag
+while getopts q:a:o:t:x:d:s:l: flag
 do
     case "${flag}" in
 	q) query_file=${OPTARG};;
@@ -9,10 +9,12 @@ do
   t) data_type=${OPTARG};;
   x) cores=${OPTARG};;
   d) debug=${OPTARG};;
+  l) align=${OPTARG};;
 #  s) script_dir=${OPTARG};;
     esac
 done
 
+align="${align:-noalign}"
 # check if data type input is valid
 valid_data="16s_full_length 16s_v4_100 16s_v4_150 16s_v3_v4 mixed"
 #contains() {
@@ -46,7 +48,6 @@ query_file=`realpath $query_file`
 accessory_dir=`realpath $accessory_dir`
 out_dir=`realpath $out_dir`
 #script_dir=`realpath $script_dir`
-
 if [[ "${data_type}" == "mixed" ]];
 then
   if [ -d "/scratch/$USER/job_$SLURM_JOB_ID" ];
@@ -64,58 +65,65 @@ then
     echo "Could not create temp dir"
     exit 1
   fi
-  mkdir ${tmpdir}/query_seq
-  seq_sep.py --infile ${query_file} --outdir ${tmpdir}/query_seq
+  if [ $align == "noalign" ];
+  then
+    mkdir ${tmpdir}/query_seq
+    seq_sep.py --infile ${query_file} --outdir ${tmpdir}/query_seq
 
-  # align sequences
-  echo "aligning the sequences..."
+    # align sequences
+    echo "aligning the sequences..."
 
-  # split query sequences into multiple files (/tmp directory)
-  for i in ${tmpdir}/query_seq/*.fa;
-  do
-    upptmpdir=`mktemp -d -t 'upp-tmp-XXXXXXXXXX'`
-    # check if the directory is created
-    if [[ ! "$tmpdir" || ! -d "$tmpdir" ]]; then
-      echo "Could not create temp dir"
-      exit 1
-    fi
-    j="${i##*/}"
-    dt="${j%.*}"
-    N=$(grep ">" ${i} | wc -l)
-    awk -v size=4000000 -v pre=${upptmpdir}/seq -v pad="${#N}" '
-       /^>/ { n++; if (n % size == 1) { close(fname); fname = sprintf("%s.%0" pad "d", pre, n) } }
-          { print >> fname }
-    ' ${i}
-
-    mkdir ${upptmpdir}/aligned
-    cnt=0
-    for i in ${upptmpdir}/seq*;
+    # split query sequences into multiple files (/tmp directory)
+    for i in ${tmpdir}/query_seq/*.fa;
     do
-      mkdir ${upptmpdir}/tmp
-      mkdir ${upptmpdir}/tmp_result
-      grep ">" ${i} | sed "s/^>//g" | sort > ${upptmpdir}/tmp_result/query_ids.txt
-      upp_c=${cores}
-    #  awk "/^>/ {n++} n>8000 {exit} {print}" ${accessory_dir}/${data_type}_a.fasta > ${i}.backbone
-      run_upp.py -s ${i} -a ${accessory_dir}/${dt}_ao.fasta -t ${accessory_dir}/${dt}.nwk -A 200 -d ${upptmpdir}/tmp_result -x $upp_c -p ${upptmpdir}/tmp 1>${tmpdir}/upp-out.log 2>>${out_dir}/${dt}_upp.log
-      grep -w -A 1 -f ${upptmpdir}/tmp_result/query_ids.txt ${upptmpdir}/tmp_result/output_alignment_masked.fasta --no-group-separator > ${upptmpdir}/aligned/${cnt}.fa
-      cnt=$((cnt+1))
-      rm -rf ${upptmpdir}/tmp
-      rm -rf ${upptmpdir}/tmp_result
+      upptmpdir=`mktemp -d -t 'upp-tmp-XXXXXXXXXX'`
+      # check if the directory is created
+      if [[ ! "$tmpdir" || ! -d "$tmpdir" ]]; then
+        echo "Could not create temp dir"
+        exit 1
+      fi
+      j="${i##*/}"
+      dt="${j%.*}"
+      N=$(grep ">" ${i} | wc -l)
+      awk -v size=4000000 -v pre=${upptmpdir}/seq -v pad="${#N}" '
+         /^>/ { n++; if (n % size == 1) { close(fname); fname = sprintf("%s.%0" pad "d", pre, n) } }
+            { print >> fname }
+      ' ${i}
+
+      mkdir ${upptmpdir}/aligned
+      cnt=0
+      for i in ${upptmpdir}/seq*;
+      do
+        mkdir ${upptmpdir}/tmp
+        mkdir ${upptmpdir}/tmp_result
+        grep ">" ${i} | sed "s/^>//g" | sort > ${upptmpdir}/tmp_result/query_ids.txt
+        upp_c=${cores}
+      #  awk "/^>/ {n++} n>8000 {exit} {print}" ${accessory_dir}/${data_type}_a.fasta > ${i}.backbone
+        run_upp.py -s ${i} -a ${accessory_dir}/${dt}_ao.fasta -t ${accessory_dir}/${dt}.nwk -A 200 -d ${upptmpdir}/tmp_result -x $upp_c -p ${upptmpdir}/tmp 1>${tmpdir}/upp-out.log 2>>${out_dir}/${dt}_upp.log
+  #      grep -w -A 1 -f ${upptmpdir}/xtmp_result/query_ids.txt ${upptmpdir}/tmp_result/output_alignment_masked.fasta --no-group-separator > ${upptmpdir}/aligned/${cnt}.fa
+        seqkit grep -w 0 -f ${upptmpdir}/tmp_result/query_ids.txt ${upptmpdir}/tmp_result/output_alignment_masked.fasta -o ${upptmpdir}/aligned/${cnt}.fa
+        cnt=$((cnt+1))
+        rm -rf ${upptmpdir}/tmp
+        rm -rf ${upptmpdir}/tmp_result
+      done
+      cat ${upptmpdir}/aligned/*.fa > ${tmpdir}/${dt}_aligned.fa
+      rm -rf $upptmpdir
     done
-    cat ${upptmpdir}/aligned/*.fa > ${tmpdir}/${dt}_aligned.fa
-    rm -rf $upptmpdir
-  done
 
-  rm ${tmpdir}/query_seq/*
-  if test -f "${tmpdir}/16s_full_length_aligned.fa";
-  then
-    cp ${tmpdir}/16s_full_length_aligned.fa ${tmpdir}/query_seq
-  fi
+    rm ${tmpdir}/query_seq/*
+    if test -f "${tmpdir}/16s_full_length_aligned.fa";
+    then
+      cp ${tmpdir}/16s_full_length_aligned.fa ${tmpdir}/query_seq
+    fi
 
-  if test -f "${tmpdir}/16s_v4_aligned.fa";
-  then
-    cp ${tmpdir}/16s_v4_aligned.fa ${out_dir}/16s_v4_aligned_all.fa
-    seq_sep.py --infile ${tmpdir}/16s_v4_aligned.fa --outdir ${tmpdir}/query_seq --aligned
+    if test -f "${tmpdir}/16s_v4_aligned.fa";
+    then
+      cp ${tmpdir}/16s_v4_aligned.fa ${out_dir}/16s_v4_aligned_all.fa
+      seq_sep.py --infile ${tmpdir}/16s_v4_aligned.fa --outdir ${tmpdir}/query_seq --aligned
+    fi
+  else
+    mkdir -p ${tmpdir}/query_seq/
+    cp $align/*aligned.fa ${tmpdir}/query_seq/
   fi
 
   for i in ${tmpdir}/query_seq/*.fa;

@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import collections
 
 import torch
 import os
@@ -61,6 +62,7 @@ def distance_portion(nodes1, nodes2, mode):
         nodes2 = nodes2.squeeze(0)
         return hyp_dist(nodes1, nodes2)
 
+
 def project_hyperbolic(x):
     N, d = x.shape[0], x.shape[1]
 
@@ -90,6 +92,7 @@ def hyp_dist(embeddings1, embeddings2=None):
     G = torch.matmul(torch.matmul(x1, H), torch.transpose(x2, 0, 1))
     G[G >= -1] = -1
     return torch.acosh(-G)
+
 
 def distance(nodes1, nodes2, mode):
     # node1: query
@@ -234,6 +237,7 @@ def process_seq(self_seq, args, isbackbone, need_mask=False):
         return names, torch.from_numpy(seqs), torch.from_numpy(mask).bool()
     return names, torch.from_numpy(seqs)
 
+
 def get_embeddings_cluster(seqs, model, query=True, model_idx=None, only_class=False):
     with torch.no_grad():
         if query:
@@ -270,10 +274,20 @@ def get_embeddings_cluster(seqs, model, query=True, model_idx=None, only_class=F
             encodings = torch.cat(encodings, dim=0)
             return encodings
 
-def save_depp_dist_cluster(model, args):
+def save_dataframe(data_origin, outfile):
+    data_origin = data_origin.astype(str)
+    data_origin = "\t" + "\t".join(data_origin.keys().astype(str)) + "\n" + \
+                  "\n".join([str(k) + "\t" + "\t".join(data_origin.loc[k].values) for k in
+                             data_origin.index]) + "\n"
+    with open(outfile, 'w') as f:
+        f.write(data_origin)
+
+# @profile
+def save_depp_dist_cluster(model, args, use_cluster=None):
     t1 = time.time()
     os.makedirs(args.outdir, exist_ok=True)
     query_seq_file = args.query_seq_file
+    args.replicate_seq = model.hparams.replicate_seq
     query_seq = SeqIO.to_dict(SeqIO.parse(query_seq_file, "fasta"))
     query_seq_names, query_seq_tensor = process_seq(query_seq, args, isbackbone=False, need_mask=False)
     print('calculating query embeddings...')
@@ -283,25 +297,68 @@ def save_depp_dist_cluster(model, args):
             tmp_class = dict(zip(query_seq_names, list(query_idxs.numpy().astype(int))))
             tmp_class = {i: int(tmp_class[i]) for i in tmp_class}
             json.dump(tmp_class, f, sort_keys=True, indent=4)
+        torch.save(query_idxs_probs, f'{args.outdir}/class_prob.pt')
+        torch.save(query_seq_names, f'{args.outdir}/query_seq_names.pt')
         t2 = time.time()
         print('finish! take {:.2f} seconds.'.format(t2 - t1))
         return
         # torch.save(query_idxs_probs, f'{args.outdir}/class_probs.pt')
         # torch.save(query_seq_names, f'{args.outdir}/query_labels.pt')
 
-    query_encodings, query_idxs, query_idxs_probs = get_embeddings_cluster(query_seq_tensor, model, query=True)
-    query_encodings_dict = {i: torch.cat(list(query_encodings[query_idxs == i])) for i in range(model.hparams.cluster_num) if (query_idxs == i).sum() > 0}
-    query_names_dict = {i: list(np.array(query_seq_names)[query_idxs == i]) for i in range(model.hparams.cluster_num) if (query_idxs == i).sum() > 0}
-    # torch.save(query_idxs_probs, f'{args.outdir}/class_probs.pt')
-    # torch.save(query_seq_names, f'{args.outdir}/query_labels.pt')
-    entropy = scipy.stats.entropy(query_idxs_probs, axis=-1)
-    entropy_s = [f'{query_seq_names[i]}\t{entropy[i]}\n' for i in range(len(entropy))]
-    entropy_s = "".join(entropy_s)
-    with open(f'{args.outdir}/entropy.txt', 'w') as f:
-        f.write(entropy_s)
+    if use_cluster is None:
 
+        if args.use_multi_class:
+            query_idxs, query_idxs_probs = get_embeddings_cluster(query_seq_tensor, model, query=True, only_class=True)
+            sorted_probs, sorted_probs_idx = torch.sort(query_idxs_probs, dim=-1, descending=True)
+            add_class_idx = (sorted_probs[:, 0] / sorted_probs[:, 1]) < args.prob_thr
+            add_class_idx_third = ((sorted_probs[:, 1] / sorted_probs[:, 2]) < args.prob_thr) & add_class_idx
+            add_class_idx_forth = ((sorted_probs[:, 2] / sorted_probs[:, 3]) < args.prob_thr) & add_class_idx_third
+
+            cluster_idxs = {}
+            for i in range(model.hparams.cluster_num):
+                idx1 = sorted_probs_idx[:, 0] == i
+                idx2 = (sorted_probs_idx[:, 1] == i) & add_class_idx
+                idx3 = (sorted_probs_idx[:, 2] == i) & add_class_idx_third
+                idx4 = (sorted_probs_idx[:, 3] == i) & add_class_idx_forth
+                idx_all = idx1 | idx2 | idx3 | idx4
+                if idx_all.sum() > 0:
+                    cluster_idxs[i] = torch.arange(0, len(query_seq_tensor))[idx1 | idx2 | idx3 | idx4]
+
+            query_encodings_dict = {i: get_embeddings_cluster(
+                query_seq_tensor[cluster_idxs[i]],
+                model,
+                query=False,
+                model_idx=i
+                ) for i in cluster_idxs}
+            query_names_dict = {i: list(np.array(query_seq_names)[cluster_idxs[i]]) if len(cluster_idxs[i]) > 1
+                                            else [np.array(query_seq_names)[cluster_idxs[i]]] for i in cluster_idxs}
+        else:
+            query_encodings, query_idxs, query_idxs_probs = get_embeddings_cluster(query_seq_tensor, model, query=True)
+            if len(query_encodings) == 1:
+                query_encodings_dict = {query_idxs[0].item(): query_encodings[0]}
+                query_names_dict = {query_idxs[0].item(): query_seq_names}
+            else:
+                query_encodings_dict = {i: torch.cat(list(query_encodings[query_idxs == i])) for i in
+                                        range(model.hparams.cluster_num) if (query_idxs == i).sum() > 0}
+                query_names_dict = {i: list(np.array(query_seq_names)[query_idxs == i]) for i in
+                                    range(model.hparams.cluster_num) if (query_idxs == i).sum() > 0}
+        # torch.save(query_idxs_probs, f'{args.outdir}/class_probs.pt')
+        # torch.save(query_seq_names, f'{args.outdir}/query_labels.pt')
+        entropy = scipy.stats.entropy(query_idxs_probs, axis=-1)
+        entropy_s = [f'{query_seq_names[i]}\t{entropy[i]}\n' for i in range(len(entropy))]
+        entropy_s = "".join(entropy_s)
+        with open(f'{args.outdir}/entropy.txt', 'w') as f:
+            f.write(entropy_s)
+        torch.save(query_idxs_probs, f'{args.outdir}/prob.pt')
+
+    else:
+        query_encodings = get_embeddings_cluster(query_seq_tensor, model, query=False, model_idx=use_cluster)
+        query_encodings_dict = {use_cluster: query_encodings}
+        query_names_dict = {use_cluster: query_seq_names}
+    t2 = time.time()
+    print('finish query embeddings calculation! use {:.2f} seconds.'.format(t2 - t1))
     print('calculating backbone embeddings...')
-
+    t3 = time.time()
     def get_backbone_embeddings(i):
         backbone_seq_file = f"{args.seqdir}/{i}.fa"
         backbone_seq = SeqIO.to_dict(SeqIO.parse(backbone_seq_file, "fasta"))
@@ -310,32 +367,71 @@ def save_depp_dist_cluster(model, args):
         return backbone_encodings, backbone_seq_names
 
     if args.backbone_emb is None:
-        backbone_embs_names_tmp = [get_backbone_embeddings(i) for i in range(model.hparams.cluster_num)]
+        if use_cluster is None:
+            backbone_embs_names_tmp = [get_backbone_embeddings(i) for i in range(model.hparams.cluster_num)]
+        else:
+            backbone_embs_names_tmp = [get_backbone_embeddings(use_cluster)]
 
-        backbone_encodings_dict = {i: backbone_embs_names_tmp[i][0] for i in range(model.hparams.cluster_num)}
-        backbone_names_dict = {i: backbone_embs_names_tmp[i][1] for i in range(model.hparams.cluster_num)}
+        if use_cluster is None:
+            backbone_encodings_dict = {i: backbone_embs_names_tmp[i][0] for i in range(model.hparams.cluster_num)}
+            backbone_names_dict = {i: backbone_embs_names_tmp[i][1] for i in range(model.hparams.cluster_num)}
+        else:
+            backbone_encodings_dict = {use_cluster: backbone_embs_names_tmp[0][0]}
+            backbone_names_dict = {use_cluster: backbone_embs_names_tmp[0][1]}
         torch.save(backbone_encodings_dict, f'{args.outdir}/backbone_emb.pt')
         torch.save(backbone_names_dict, f'{args.outdir}/backbone_ids.pt')
     else:
         backbone_names_dict = torch.load(args.backbone_id)
         backbone_encodings_dict = torch.load(args.backbone_emb)
-
+    print('finish backbone embedding calculation! use {:.2f} seconds.'.format(t3 - t2))
     print('calculating distance matrix...')
-    for i in query_encodings_dict.keys():
-        query_dist = distance(query_encodings_dict[i], backbone_encodings_dict[i], args.distance_mode) * model.hparams.distance_ratio
+    query_dist_dict = {}
+
+    for i in query_encodings_dict:
+        query_dist = distance(query_encodings_dict[i], backbone_encodings_dict[i],
+                              args.distance_mode) * model.hparams.distance_ratio
         if 'square_root' in args.weighted_method:
             query_dist = query_dist ** 2
         query_dist = np.array(query_dist)
         query_dist[query_dist < 1e-3] = 0
-        data_origin = dict(zip(query_names_dict[i], list(query_dist.astype(str))))
-        data_origin = "\t" + "\t".join(backbone_names_dict[i]) + "\n" + \
-                      "\n".join([str(k) + "\t" + "\t".join(data_origin[k]) for k in data_origin]) + "\n"
-        t4 = time.time()
+        query_dist_dict[i] = query_dist
+    t4 = time.time()
+    print('finish distance calculation! use {:.2f} seconds.'.format(t4 - t3))
+
+    if args.use_multi_class:
+        query_dist_df_dict = \
+            {i: pd.DataFrame.from_dict(dict(zip(query_names_dict[i], list(query_dist_dict[i])))) for i in query_dist_dict}
+        for i in query_dist_df_dict:
+            query_dist_df_dict[i].index = backbone_names_dict[i]
+
+        for name_idx in range(math.ceil(len(query_seq_names) / 200)):
+            cur_names = query_seq_names[name_idx*200: (name_idx+1)*200]
+            data_origin = None
+            for i in query_dist_dict:
+                inter_names = list(set(cur_names).intersection(set(query_dist_df_dict[i].keys())))
+                if len(inter_names) == 0:
+                    continue
+                if data_origin is None:
+                    data_origin = query_dist_df_dict[i][inter_names]
+                else:
+                    data_origin = pd.concat([data_origin, query_dist_df_dict[i][inter_names]], axis=0)
+            data_origin = data_origin.groupby(lambda x: x).median()
+            data_origin = data_origin.fillna(-1)
+            save_dataframe(data_origin.transpose(), f"{args.outdir}/depp{name_idx}.csv")
+    else:
+        for i in model.hparams.cluster_num:
+            data_origin = dict(zip(query_names_dict[i], list(query_dist_dict[i].astype(str))))
+            data_origin = "\t" + "\t".join(backbone_names_dict[i]) + "\n" + \
+                          "\n".join([str(k) + "\t" + "\t".join(data_origin[k]) for k in data_origin]) + "\n"
+            with open(f"{args.outdir}/depp{i}.csv", 'w') as f:
+                f.write(data_origin)
+
         # print('convert string', t4 - t3)
-        with open(os.path.join(args.outdir, f'depp{i}.csv'), 'w') as f:
-            f.write(data_origin)
+        # with open(os.path.join(args.outdir, f'depp{i}.csv'), 'w') as f:
+        #     f.write(data_origin)
     t2 = time.time()
     print('finish! take {:.2f} seconds.'.format(t2 - t1))
+
 
 def get_embeddings(seqs, model, mask=None):
     encodings = []
@@ -347,6 +443,7 @@ def get_embeddings(seqs, model, mask=None):
         encodings.append(encodings_tmp)
     encodings = torch.cat(encodings, dim=0)
     return encodings
+
 
 def save_depp_dist(model, args, recon_model=None):
     t1 = time.time()
@@ -360,14 +457,18 @@ def save_depp_dist(model, args, recon_model=None):
     args.distance_ratio = model.hparams.distance_ratio
     args.gap_encode = model.hparams.gap_encode
     args.jc_correct = model.hparams.jc_correct
-    #args.replicate_seq = model.hparams.replicate_seq
+    # args.replicate_seq = model.hparams.replicate_seq
     print('jc_correct', args.jc_correct)
     if args.jc_correct:
         args.jc_ratio = model.hparams.jc_ratio
     if not os.path.exists(dis_file_root):
         os.makedirs(dis_file_root, exist_ok=True)
 
-    backbone_seq = SeqIO.to_dict(SeqIO.parse(backbone_seq_file, "fasta"))
+    if ((args.backbone_emb is None) or (args.backbone_id is None)) or (
+            (recon_model is not None) and (args.recon_backbone_emb is None)):
+        backbone_seq = SeqIO.to_dict(SeqIO.parse(backbone_seq_file, "fasta"))
+    else:
+        backbone_seq = None
     query_seq = SeqIO.to_dict(SeqIO.parse(query_seq_file, "fasta"))
 
     if args.jc_correct:
@@ -379,11 +480,13 @@ def save_depp_dist(model, args, recon_model=None):
         # breakpoint()
         if not (recon_model is None):
             if (args.recon_backbone_emb is None) or (args.backbone_id is None) or (args.backbone_gap is None):
-                backbone_seq_names, backbone_seq_tensor, backbone_mask = process_seq(backbone_seq, args, isbackbone=True, need_mask=True)
+                backbone_seq_names, backbone_seq_tensor, backbone_mask = process_seq(backbone_seq, args,
+                                                                                     isbackbone=True, need_mask=True)
             else:
                 backbone_seq_names = torch.load(args.backbone_id)
                 backbone_mask = torch.load(args.backbone_gap)
-            query_seq_names, query_seq_tensor, query_mask = process_seq(query_seq, args, isbackbone=False, need_mask=True)
+            query_seq_names, query_seq_tensor, query_mask = process_seq(query_seq, args, isbackbone=False,
+                                                                        need_mask=True)
         else:
             if (args.backbone_emb is None) or (args.backbone_id is None):
                 backbone_seq_names, backbone_seq_tensor = process_seq(backbone_seq, args, isbackbone=True)
@@ -402,10 +505,10 @@ def save_depp_dist(model, args, recon_model=None):
     else:
         backbone_encodings = torch.load(args.backbone_emb)
     query_encodings = get_embeddings(query_seq_tensor, model)
-    #torch.save(query_encodings, f'{dis_file_root}/query_embeddings.pt')
-    #torch.save(query_seq_names, f'{dis_file_root}/query_names.pt')
-    #torch.save(backbone_encodings, f'{dis_file_root}/backbone_embeddings.pt')
-    #torch.save(backbone_seq_names, f'{dis_file_root}/backbone_names.pt')
+    # torch.save(query_encodings, f'{dis_file_root}/query_embeddings.pt')
+    # torch.save(query_seq_names, f'{dis_file_root}/query_names.pt')
+    torch.save(backbone_encodings, f'{dis_file_root}/backbone_embeddings.pt')
+    torch.save(backbone_seq_names, f'{dis_file_root}/backbone_names.pt')
 
     if not (recon_model is None):
         if (args.recon_backbone_emb is None) or (args.backbone_id is None) or (args.backbone_gap is None):
@@ -418,7 +521,7 @@ def save_depp_dist(model, args, recon_model=None):
     print(f'finish embedding calculation!')
     print(f'calculating distance matrix...')
     t2 = time.time()
-    #print('calculate embeddings', t2 - t1)
+    # print('calculate embeddings', t2 - t1)
 
     # query_dist = distance(query_encodings, backbone_encodings, args.distance_mode) * args.distance_ratio
     query_dist = distance(query_encodings, backbone_encodings, args.distance_mode) * args.distance_ratio
@@ -427,24 +530,25 @@ def save_depp_dist(model, args, recon_model=None):
 
     if recon_model:
         gap_portion = 1 - query_mask.int().sum(-1) / query_mask.shape[-1]
-        recon_query_dist = distance(recon_query_encodings, recon_backbone_encodings, args.distance_mode) * args.distance_ratio
+        recon_query_dist = distance(recon_query_encodings, recon_backbone_encodings,
+                                    args.distance_mode) * args.distance_ratio
         if 'square_root' in args.weighted_method:
             recon_query_dist = recon_query_dist ** 2
         query_dist = query_dist * (1 - gap_portion) + recon_query_dist * gap_portion
 
     t3 = time.time()
-    #print('calculate distance', t3 - t2)
+    # print('calculate distance', t3 - t2)
     query_dist = np.array(query_dist)
     query_dist[query_dist < 1e-3] = 0
     data_origin = dict(zip(query_seq_names, list(query_dist.astype(str))))
     data_origin = "\t" + "\t".join(backbone_seq_names) + "\n" + \
-                  "\n".join([str(k) + "\t"+ "\t".join(data_origin[k]) for k in data_origin]) + "\n"
+                  "\n".join([str(k) + "\t" + "\t".join(data_origin[k]) for k in data_origin]) + "\n"
     t4 = time.time()
-    #print('convert string', t4 - t3)
+    # print('convert string', t4 - t3)
     with open(os.path.join(dis_file_root, f'depp.csv'), 'w') as f:
         f.write(data_origin)
     t5 = time.time()
-    #print('save string', t5 - t4)
+    # print('save string', t5 - t4)
     # data_origin = pd.DataFrame.from_dict(data_origin, orient='index', columns=backbone_seq_names)
 
     if args.query_dist:
@@ -456,7 +560,7 @@ def save_depp_dist(model, args, recon_model=None):
     # with open(f'{args.outdir}/depp_tmp/seq_name.txt', 'w') as f:
     #     f.write("\n".join(query_seq_names) + '\n')
     print('original distanace matrix saved!')
-    print("take {:.2f} seconds".format(t5-t1))
+    print("take {:.2f} seconds".format(t5 - t1))
 
 
 def save_repr_emb(model, args):
@@ -472,7 +576,8 @@ def save_repr_emb(model, args):
         backbone_seq_names, backbone_seq_tensor = process_seq(backbone_seq, args, isbackbone=True)
         backbone_seq_tensor_idx = np.random.choice(len(backbone_seq_tensor), size=100, replace=False)
         backbone_seq_tensor = backbone_seq_tensor[backbone_seq_tensor_idx]
-        backbone_encodings = {i: get_embeddings(backbone_seq_tensor, model, query=False, model_idx=i).mean(0) for i in range(model.hparams.cluster_num)}
+        backbone_encodings = {i: get_embeddings(backbone_seq_tensor, model, query=False, model_idx=i).mean(0) for i in
+                              range(model.hparams.cluster_num)}
         return backbone_encodings
 
     backbone_embs_tmp = [get_backbone_embeddings(i) for i in range(model.hparams.cluster_num)]
@@ -482,9 +587,6 @@ def save_repr_emb(model, args):
     torch.save(backbone_encodings_dict, f'{args.outdir}/repr_emb.pt')
     t2 = time.time()
     print('finish! take {:.2f} seconds.'.format(t2 - t1))
-
-
-
 
 # def save_depp_dist(model, args, recon_model=None):
 #     t1 = time.time()
@@ -611,3 +713,4 @@ def save_repr_emb(model, args):
 #     #     f.write("\n".join(query_seq_names) + '\n')
 #     print('original distanace matrix saved!')
 #     print("take {:.2f} seconds".format(t5-t1))
+

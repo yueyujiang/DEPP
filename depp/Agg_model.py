@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import json
 
 import torch
 import torch.nn as nn
@@ -14,7 +15,7 @@ import sys
 
 
 class model(LightningModule):
-    def __init__(self, args, load_model=False):
+    def __init__(self, args, load_model=False, classifier_cluster_num=None):
         super(model, self).__init__()
         self.save_hyperparameters(args)
         if not self.hparams.sequence_length:
@@ -29,7 +30,7 @@ class model(LightningModule):
                 self.hparams.embedding_size = []
             else:
                 self.encoders.append(Model_pl.encoder(self.hparams))
-        self.classifier = Model_pl.classifier(self.hparams)
+        self.classifier = Model_pl.classifier(self.hparams, cluster_num=classifier_cluster_num)
 
         if load_model:
             for i in range(self.hparams.cluster_num):
@@ -61,11 +62,42 @@ class model(LightningModule):
             self.current_model = args.start_model_idx
         self.counting = 0
 
+        if load_model:
+            with open(args.cluster_corr, 'r') as f:
+                self.hparams.corr_str = f.read()
+        else:
+            corr = json.loads(self.hparams.corr_str)
+            self.corr = {int(i): torch.tensor(corr[i]) for i in corr}
+
+        # label_dict = {}
+        # for i in range(self.hparams.cluster_num):
+        #     label_file = f'{args.label_dir}/{i}.txt'
+        #     with open(label_file, 'r') as f:
+        #         label_file = f.read().split('\n')
+        #     if label_file[-1] == '':
+        #         label_file = label_file[:-1]
+        #     label_dict[i] = set(label_file)
+        # self.label_dict = label_dict
+        #
+        # label_dict_add_repr = {}
+        # for i in range(self.hparams.cluster_num):
+        #     label_file = f'{args.label_dir_add_repr}/{i}.txt'
+        #     with open(label_file, 'r') as f:
+        #         label_file = f.read().split('\n')
+        #     if label_file[-1] == '':
+        #         label_file = label_file[:-1]
+        #     label_dict_add_repr[i] = set(label_file)
+        #
+        # self.label_dict_add_repr = label_dict_add_repr
+
+
         self.save_hyperparameters(self.hparams)
 
     def forward(self, x, model_idx=None, only_class=False) -> torch.Tensor:
         if self.testing:
             model_prob = self.classifier(x).softmax(-1)
+            model_prob = torch.stack([model_prob[:, self.corr[i]].max(-1)[0] for i in range(self.hparams.cluster_num)], dim=-1)
+            # model_prob = model_prob / model_prob.sum(-1, keepdims=True)
             model_idx = model_prob.argmax(-1)
             if only_class:
                 return model_idx, model_prob

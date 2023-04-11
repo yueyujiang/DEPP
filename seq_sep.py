@@ -32,6 +32,8 @@ else:
     def v4_150_condition(i): return (not v4_condition(i)) and (v4_150_p[i] >= 0.8 or v4_150_p[i] >= v4_100_p[i])
     def v4_100_condition(i): return (not v4_condition(i)) and (not v4_150_condition(i))
     v4 = [f'>{i}\n{str(all_seq[i].seq)}\n' for i in all_seq if v4_condition(i)]
+    # v4_150 = [f'>{i}\n{str(all_seq[i].seq)[:149]}\n' for i in all_seq if v4_150_condition(i)]
+    # v4_100 = [f'>{i}\n{str(all_seq[i].seq)[:99]}\n' for i in all_seq if v4_100_condition(i)]
     v4_150 = [f'>{i}\n{str(all_seq[i].seq)[:149]}\n' for i in all_seq if v4_150_condition(i)]
     v4_100 = [f'>{i}\n{str(all_seq[i].seq)[:99]}\n' for i in all_seq if v4_100_condition(i)]
 

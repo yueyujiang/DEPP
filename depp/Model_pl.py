@@ -47,7 +47,7 @@ class encoder(nn.Module):
         return x
 
 class classifier(nn.Module):
-    def __init__(self, args):
+    def __init__(self, args, cluster_num=None):
         super(classifier, self).__init__()
         channel = 4
 
@@ -59,10 +59,18 @@ class classifier(nn.Module):
             resblocks.append(submodule.resblock(args.h_channel,
                                                 args.h_channel,
                                                 5, 0.3))
+
+        if args.classifier_seqdir is not None:
+            seqdir = args.classifier_seqdir
+        else:
+            seqdir = args.seqdir
+        if cluster_num is None:
+            cluster_num = len([i for i in range(len(os.listdir(seqdir))) if os.path.isfile(f'{seqdir}/{i}.fa')])
+
         self.resblocks = nn.Sequential(*resblocks)
 
         self.linear = nn.Conv1d(args.h_channel,
-                                args.cluster_num,
+                                cluster_num,
                                 args.sequence_length)
         self.args = args
         self.train_loss = 0
@@ -73,7 +81,7 @@ class classifier(nn.Module):
         x = self.celu(self.conv(x))
         x = self.resblocks(x)
         x = self.linear(x).squeeze(-1)
-        x = x.view(bs, self.args.cluster_num)
+        x = x.view(bs, -1)
         return x
 
 

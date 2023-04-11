@@ -108,9 +108,15 @@ class data_agg(Dataset):
         self.all_seq = {}
         self.all_nodes = []
         self.all_idx = []
-        for i in range(args.cluster_num):
+        if args.classifier_seqdir is not None:
+            seqdir = args.classifier_seqdir
+        else:
+            seqdir = args.seqdir
+        print(f'classifier seqdir: {seqdir}')
+        cluster = [i for i in range(len(os.listdir(seqdir))) if os.path.isfile(f'{seqdir}/{i}.fa')]
+        for i in cluster:
             print(f'loading sequences {i}...')
-            backbone_seq_file = f'{args.seqdir}/{i}.fa'
+            backbone_seq_file = f'{seqdir}/{i}.fa'
             self_seq = SeqIO.to_dict(SeqIO.parse(backbone_seq_file, "fasta"))
             args.sequence_length = len(list(self_seq.values())[0])
             L = args.sequence_length
