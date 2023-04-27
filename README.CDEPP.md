@@ -1,4 +1,5 @@
-# This is the implementation of C-DEPP (https://www.biorxiv.org/content/10.1101/2023.03.27.534201v2)
+# This is the implementation of C-DEPP 
+https://www.biorxiv.org/content/10.1101/2023.03.27.534201v2
 
 ## Install      
 `pip install depp==0.3.1`
