@@ -283,7 +283,7 @@ def save_dataframe(data_origin, outfile):
         f.write(data_origin)
 
 # @profile
-def save_depp_dist_cluster(model, args, use_cluster=None):
+def save_depp_dist_cluster(model, args, use_cluster=None, recon_model=None):
     t1 = time.time()
     os.makedirs(args.outdir, exist_ok=True)
     query_seq_file = args.query_seq_file
@@ -292,7 +292,10 @@ def save_depp_dist_cluster(model, args, use_cluster=None):
     query_seq_names, query_seq_tensor = process_seq(query_seq, args, isbackbone=False, need_mask=False)
     print('calculating query embeddings...')
     if args.only_class:
-        query_idxs, query_idxs_probs = get_embeddings_cluster(query_seq_tensor, model, query=True, only_class=True)
+        if recon_model is None:
+            query_idxs, query_idxs_probs = get_embeddings_cluster(query_seq_tensor, model, query=True, only_class=True)
+        else:
+            query_idxs, query_idxs_probs = get_embeddings_cluster(query_seq_tensor, recon_model, query=True, only_class=True)
         with open(f'{args.outdir}/class.json', 'w') as f:
             tmp_class = dict(zip(query_seq_names, list(query_idxs.numpy().astype(int))))
             tmp_class = {i: int(tmp_class[i]) for i in tmp_class}

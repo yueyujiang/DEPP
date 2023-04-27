@@ -6,6 +6,7 @@ import torch
 import numpy as np
 # import Model_pl
 from depp import Agg_model
+from depp import Agg_model_recon
 from depp import Model_pl
 from depp import utils
 from depp import default_config
@@ -35,6 +36,10 @@ def main():
             m = torch.load(args.model_path)
         classifier_cluster_num = m['state_dict']['classifier.linear.bias'].shape[0]
         model = Agg_model.model.load_from_checkpoint(args.model_path, load_model=False, classifier_cluster_num=classifier_cluster_num)
+
+        if not args.recon_model_path is None:
+            recon_model = Agg_model_recon.model.load_from_checkpoint(args.recon_model_path, load_model=False, classifier_cluster_num=classifier_cluster_num)
+
     except:
         cluster_model = False
         try:
@@ -48,7 +53,10 @@ def main():
     # else:
     #     recon_model = None
     if cluster_model:
-        utils.save_depp_dist_cluster(model, args, use_cluster=args.use_cluster)
+        if args.recon_model_path is None:
+            utils.save_depp_dist_cluster(model, args, use_cluster=args.use_cluster)
+        else:
+            utils.save_depp_dist_cluster(model, args, use_cluster=args.use_cluster, recon_model=recon_model)
     else:
         utils.save_depp_dist(model, args)
 

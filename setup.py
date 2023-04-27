@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setup(
 	name='depp',    # This is the name of your PyPI-package.
-        version='0.3.0',    # Update the version number for new releases
+        version='0.3.1',    # Update the version number for new releases
         scripts=['train_depp.py',
                  'depp/depp_distance.py',
                  'agg_dist.py',
@@ -21,7 +21,12 @@ setup(
                  'depp/grep_seq.py',
                  'depp/get_names_by_entropy_gap.py',
                  'depp/grep_jplace.py',
-                 'depp/count_gapped_ratio.py'], # The name of your scipt, and also the command you'll be using for calling it
+                 'depp/count_gapped_ratio.py',
+                 'depp/set_bl_one.py',
+                 'depp/grep_seq_group.py',
+                 'depp/get_tree_dist.py',
+                 'depp/select_species_by_distance.py',
+                 'train_cluster_depp.sh'], # The name of your scipt, and also the command you'll be using for calling it
         description='DEPP: Deep Learning Enables Extending Species Trees using Single Genes',
         long_description='DEPP is a deep-learning-based tool for phylogenetic placement.'
                          'Output of the tool is the distance matrix between the query sequences and the backbone sequences',
