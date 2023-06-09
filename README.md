@@ -1,5 +1,7 @@
 # DEPP
 
+This is the code for the paper DEPP: Deep Learning Enables Extending Species Trees using Single Genes. The data is located https://ter-trees.ucsd.edu/data/depp/latest/.
+
 [comment]: <> (## requirements)
 
 [comment]: <> (* Python 3)
