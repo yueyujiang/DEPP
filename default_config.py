@@ -43,7 +43,8 @@ default_config = \
      'jc_correct': False,
      'k': 1.0,
      'ratio': 1,
-     'internal': False
+     'internal': False,
+     'train_mode': 'partial'
      }
 
 # def get_cfg_defaults():

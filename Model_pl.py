@@ -115,6 +115,9 @@ class model(LightningModule):
 
     def training_step(self, batch, batch_idx):
 
+        if  self.trainer.current_epoch < 500:
+
+
         nodes = batch['nodes']
         seq = batch['seqs'].float()
         device = seq.device
@@ -279,6 +282,7 @@ class model(LightningModule):
         # TODO: do a real train/val split
         # breakpoint()
         self.train_data = data.data(self.hparams, calculate_distance_matrix=True)
+
         loader = DataLoader(self.train_data,
                             batch_size=self.hparams.batch_size,
                             shuffle=False,

@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import time
 
 import torch
 import os
@@ -116,6 +117,31 @@ class model(LightningModule):
 
         self.save_hyperparameters(self.hparams)
 
+
+    def get_distance_ratio(self):
+        loader = DataLoader(self.train_data,
+                            batch_size=self.hparams.batch_size,
+                            num_workers=self.hparams.num_worker,
+                            shuffle=True,
+                            drop_last=True)
+        with torch.no_grad():
+            init_distance = []
+            for batch_idx, batch in enumerate(loader):
+                seq = batch['seqs'].float().to(self.device)
+                model_idx = batch['cluster_idx'].long()
+                encoding = self(seq, model_idx[0])
+                distance = utils.distance(encoding, encoding.detach(),
+                                          self.hparams.distance_mode)
+
+                not_self = torch.ones_like(distance)
+                not_self[torch.arange(0, len(distance)), torch.arange(0, len(distance))] = 0
+                init_distance.append(distance[not_self == 1])
+            init_distance = torch.cat(init_distance)
+            mean_init_distance = init_distance.mean()
+        mean_tree_distance = np.sqrt(self.train_data.distance_matrix.values).mean().mean()
+        self.encoder.distance_ratio[:] = (mean_tree_distance / mean_init_distance).item()
+
+
     def forward(self, x, model_idx=None) -> torch.Tensor:
         if self.training_classifier:
             return self.classifier(x)
@@ -198,6 +224,7 @@ class model(LightningModule):
         if not self.training_classifier:
             print(f'training {self.current_model} model...')
             self.train_data = data.get_data(self.current_model, self.hparams)
+
         else:
             # self.train_data = self.train_data_list[-1]
             print(f'training classifier...')
@@ -242,3 +269,4 @@ class model(LightningModule):
             using_native_amp,
             using_lbfgs,
         )
+

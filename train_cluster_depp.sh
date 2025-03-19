@@ -5,7 +5,7 @@
 # $3 outdir
 echo preparing the data ...
 echo clustering the tree ...
-while getopts t:s:e:g:o: flag
+while getopts t:s:e:g:o:r: flag
 do
     case "${flag}" in
 	t) backbone_tree=${OPTARG};;
@@ -13,6 +13,7 @@ do
   e) epochs=${OPTARG};;
   g) gpu=${OPTARG};;
   o) outdir=${OPTARG};;
+  r) replicate_seq=${OPTARG};;
 #  s) script_dir=${OPTARG};;
     esac
 done
@@ -20,12 +21,21 @@ done
 epochs="${epochs:-2000}"
 gpu="${gpu:-0}"
 outdir="${outdir:-model}"
+replicate_seq="${replicate_seq}:-False"
 
 tmp_dir=${outdir}/tmpdir${RANDOM}
 
 rm -rf $tmp_dir
 mkdir -p $tmp_dir
 
+if [ "${replicate_seq}" == "False" ];
+then
+  grep ">" ${backbone_seq} | sed "s/>//g" > ${tmp_dir}/seq.label
+else
+  grep ">" ${backbone_seq} | sed "s/>//g" | sed "s/_[^ \t]*//g" | sort | uniq > ${tmp_dir}/seq.label
+fi
+nw_prune -vf $backbone_tree ${tmp_dir}/seq.label > $tmp_dir/backbone.nwk
+backbone_tree=$tmp_dir/backbone.nwk
 set_bl_one.py --infile $backbone_tree --outfile $tmp_dir/backbone_blone.nwk
 TreeCluster.py -i ${tmp_dir}/backbone_blone.nwk -o ${tmp_dir}/treecluster.txt -m sum_branch -t 3000
 mkdir ${tmp_dir}/test_labels
@@ -122,7 +132,7 @@ do
                 cat ${label} > ${tmp_dir}/current_label.txt
                 echo "" >> ${tmp_dir}/current_label.txt
                 cat ${label2} >> ${tmp_dir}/current_label.txt
-                nw_prune -vf $backbone_tree ${tmp_dir}/current_label.txt > ${tmp_dir}/current_tree.nwk
+                nw_prune -v $backbone_tree `cat ${tmp_dir}/current_label.txt` > ${tmp_dir}/current_tree.nwk
                 get_tree_dist.py --treefile ${tmp_dir}/current_tree.nwk --outfile ${tmp_dir}/current_tree${i}_${j}.csv
                 s="${s} ${tmp_dir}/current_tree${i}_${j}.csv"
         done
@@ -140,11 +150,12 @@ do
   i=`basename ${label}`
   i=${i%.*}
   cat ${label} ${tmp_dir}/test_labels/${i}.txt > ${tmp_dir}/test_labels_add_repr/${i}.txt
-  nw_prune -vf $backbone_tree ${tmp_dir}/test_labels_add_repr/${i}.txt > ${tmp_dir}/test_trees_add_repr/${i}.nwk
+  nw_prune -v $backbone_tree `cat ${tmp_dir}/test_labels_add_repr/${i}.txt` > ${tmp_dir}/test_trees_add_repr/${i}.nwk
   s="${s} ${tmp_dir}/test_labels_add_repr/${i}.txt"
 done
 
 grep_seq_group.py --infile $backbone_seq --outdir ${tmp_dir}/test_seqs_add_repr --name-list ${s}
+
 
 mv ${tmp_dir}/test_seqs_add_repr ${outdir}/test_seqs_add_repr
 mv ${tmp_dir}/test_trees_add_repr ${outdir}/test_trees_add_repr
@@ -155,10 +166,10 @@ rm -rf ${tmp_dir}
 echo finish data preparing!
 echo start the training
 
-num_cluster=`ls -1 ${outdir}/test_trees_add_repr/ | wc -l`
+num_cluster=`ls -1 ${outdir}/test_trees_add_repr/*nwk | wc -l`
 if [ $gpu == "nogpu" ];
   then
-    train_depp.py seqdir=${outdir}/test_seqs_add_repr treedir=${outdir}/test_trees_add_repr model_dir=${outdir} classifier_epoch=100 epoch=${epochs} cluster_num=${num_cluster} num_worker=0 classifier_seqdir=${outdir}/test_seqs_subtree cluster_corr=${outdir}/subtree_corr.txt gpus=0
+    train_depp.py seqdir=${outdir}/test_seqs_add_repr treedir=${outdir}/test_trees_add_repr model_dir=${outdir} classifier_epoch=100 epoch=${epochs} cluster_num=${num_cluster} num_worker=0 classifier_seqdir=${outdir}/test_seqs_subtree cluster_corr=${outdir}/subtree_corr.txt gpus=0 replicate_seq=True
   else
-    CUDA_VISIBLE_DEVICES=$gpu train_depp.py seqdir=${outdir}/test_seqs_add_repr treedir=${outdir}/test_trees_add_repr model_dir=${outdir} classifier_epoch=100 epoch=${epochs} cluster_num=${num_cluster} num_worker=0 classifier_seqdir=${outdir}/test_seqs_subtree cluster_corr=${outdir}/subtree_corr.txt
+    CUDA_VISIBLE_DEVICES=$gpu train_depp.py seqdir=${outdir}/test_seqs_add_repr treedir=${outdir}/test_trees_add_repr model_dir=${outdir} classifier_epoch=100 epoch=${epochs} cluster_num=${num_cluster} num_worker=0 classifier_seqdir=${outdir}/test_seqs_subtree cluster_corr=${outdir}/subtree_corr.txt replicate_seq=True
 fi

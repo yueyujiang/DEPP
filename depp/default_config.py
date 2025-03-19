@@ -22,7 +22,7 @@ default_config = \
 'backbone_seq_file': None,
 'query_seq_file': '',
 'weighted_method': 'square_root_fm',
-'distance_alpha': 1e5,
+'distance_alpha': 1e7,
 'dis_loss_ratio': 1.0,
 'plot_freq': 1000,
 'save_data_freq': 1000,
@@ -61,7 +61,8 @@ default_config = \
 'classifier_seqdir': None,
 'use_multi_class': None,
 'prob_thr': 5,
-'cluster_corr': None
+'cluster_corr': None,
+'train_mode': 'partial'
 }
 
 #def get_cfg_defaults():

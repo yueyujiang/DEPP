@@ -4,15 +4,15 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setup(
-	name='depp',    # This is the name of your PyPI-package.
-        version='0.3.1',    # Update the version number for new releases
+	name='depp_test',    # This is the name of your PyPI-package.
+        version='0.4.0',    # Update the version number for new releases
         scripts=['train_depp.py',
                  'depp/depp_distance.py',
                  'agg_dist.py',
                  'wol_placement.sh',
                  'run_upp.sh',
                  'merge_json.py',
-		 'train_depp_recon.py',
+                 'train_depp_recon.py',
                  'depp-place-rRNA.sh',
                  'depp-place-rRNA-one-type.sh',
                  'comb_json.py',
@@ -45,7 +45,7 @@ setup(
 			'biopython==1.79',
 			'omegaconf==2.1.0',
 			'apples',
-			'scipy==1.7.3',
+			'scipy==1.10.1',
 			'dendropy==4.5.2'
 			],
         include_package_data=True

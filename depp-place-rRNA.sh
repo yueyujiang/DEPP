@@ -1,20 +1,47 @@
 #!/bin/bash
+#
+#set -x
+#set -e
+#set -o
 
-while getopts q:a:o:t:x:d:s:l: flag
-do
+tmp_dir=$TMPDIR
+
+while getopts ":q:a:o:t:x:d:l:p:h" flag; do
     case "${flag}" in
-	q) query_file=${OPTARG};;
-	a) accessory_dir=${OPTARG};;
-  o) out_dir=${OPTARG};;
-  t) data_type=${OPTARG};;
-  x) cores=${OPTARG};;
-  d) debug=${OPTARG};;
-  l) align=${OPTARG};;
-#  s) script_dir=${OPTARG};;
+        q) query_file=${OPTARG} ;;
+        a) accessory_dir=${OPTARG} ;;
+        o) out_dir=${OPTARG} ;;
+        t) data_type=${OPTARG} ;;
+        x) cores=${OPTARG} ;;
+        d) debug=${OPTARG} ;;
+        l) align=${OPTARG} ;;
+        p) tmp_dir=${OPTARG} ;;
+        h)
+          echo "Usage: $(basename "$0") [options]"
+          echo "Options:"
+          echo "  -q  Specify query sequences file in FASTA format"
+          echo "  -a  Specify accessory directory"
+          echo "  -o  Specify output directory"
+          echo "  -t  Specify data type, (default: mixed)"
+          echo "  -x  Specify number of cores, (default: 1)"
+          echo "  -p  Specify TMPDIR, (default: system's TMPDIR)"
+          echo "  -h  Display this help message"
+          exit 0 ;;
+        \?)
+            echo "Invalid option: -$OPTARG" >&2
+            exit 1 ;;
+        :)
+            echo "Option -$OPTARG requires an argument." >&2
+            exit 1 ;;
     esac
 done
 
+TMPDIR=$tmp_dir
+echo "Use $TMPDIR as TEMPDIR"
+
 align="${align:-noalign}"
+data_type="${data_type:-mixed}"
+cores="${cores:-1}"
 # check if data type input is valid
 valid_data="16s_full_length 16s_v4_100 16s_v4_150 16s_v3_v4 mixed"
 #contains() {
@@ -57,9 +84,11 @@ then
     export TMPDIR=/scratch/$USER/job_$SLURM_JOB_ID
   else
 #    echo "temporary file stores to $out_dir"
-    export TMPDIR=${out_dir}
+    TMPDIR=$(mktemp -d)
+    mkdir -p ${TMPDIR}
+    export TMPDIR=${TMPDIR}
   fi
-  tmpdir=`mktemp -d -t 'depp-tmp-XXXXXXXXXX'`
+  tmpdir=`mktemp -d -t 'depp-tmp-XXXXXXXX'`
   # check if the directory is created
   if [[ ! "$tmpdir" || ! -d "$tmpdir" ]]; then
     echo "Could not create temp dir"
@@ -76,7 +105,7 @@ then
     # split query sequences into multiple files (/tmp directory)
     for i in ${tmpdir}/query_seq/*.fa;
     do
-      upptmpdir=`mktemp -d -t 'upp-tmp-XXXXXXXXXX'`
+      upptmpdir=`mktemp -d -t 'upp-XXXXXXXX'`
       # check if the directory is created
       if [[ ! "$tmpdir" || ! -d "$tmpdir" ]]; then
         echo "Could not create temp dir"
@@ -98,10 +127,9 @@ then
         mkdir ${upptmpdir}/tmp_result
         grep ">" ${i} | sed "s/^>//g" | sort > ${upptmpdir}/tmp_result/query_ids.txt
         upp_c=${cores}
-      #  awk "/^>/ {n++} n>8000 {exit} {print}" ${accessory_dir}/${data_type}_a.fasta > ${i}.backbone
-        run_upp.py -s ${i} -a ${accessory_dir}/${dt}_ao.fasta -t ${accessory_dir}/${dt}.nwk -A 200 -d ${upptmpdir}/tmp_result -x $upp_c -p ${upptmpdir}/tmp 1>${tmpdir}/upp-out.log 2>>${out_dir}/${dt}_upp.log
-  #      grep -w -A 1 -f ${upptmpdir}/xtmp_result/query_ids.txt ${upptmpdir}/tmp_result/output_alignment_masked.fasta --no-group-separator > ${upptmpdir}/aligned/${cnt}.fa
-        seqkit grep -w 0 -f ${upptmpdir}/tmp_result/query_ids.txt ${upptmpdir}/tmp_result/output_alignment_masked.fasta -o ${upptmpdir}/aligned/${cnt}.fa
+        witch.py -y -k 4 -A 1000 -q ${i} -b ${accessory_dir}/${dt}_ao.fasta -e ${accessory_dir}/${dt}.nwk -o output_alignment.fasta -d ${upptmpdir}/tmp_result/ -t $upp_c
+#        grep -w -A 1 -f ${upptmpdir}/xtmp_result/query_ids.txt ${upptmpdir}/tmp_result/output_alignment_masked.fasta --no-group-separator > ${upptmpdir}/aligned/${cnt}.fa
+        seqkit grep -w 0 -f ${upptmpdir}/tmp_result/query_ids.txt ${upptmpdir}/tmp_result/output_alignment.fasta.masked -o ${upptmpdir}/aligned/${cnt}.fa
         cnt=$((cnt+1))
         rm -rf ${upptmpdir}/tmp
         rm -rf ${upptmpdir}/tmp_result
@@ -138,7 +166,10 @@ then
   comb_json.py --indir ${tmpdir} --outfile ${tmpdir}/placement.jplace
   cp ${tmpdir}/placement.jplace ${out_dir}/
   cat ${tmpdir}/*entropy.txt > ${out_dir}/entropy.txt
-  gappa examine graft --jplace-path ${tmpdir}/placement.jplace  --out-dir ${out_dir}/ --allow-file-overwriting > /dev/null 2>&1
+#  gappa examine graft --jplace-path ${tmpdir}/placement.jplace  --out-dir ${out_dir}/ --allow-file-overwriting > /dev/null 2>&1
+  bp placement --placements  ${out_dir}/placement.jplace \
+    --output ${out_dir}/placement.nwk \
+    --method fully-resolved
   function cleanup {
     rm -rf $tmpdir
     rm -rf $upptmpdir
@@ -155,7 +186,7 @@ else
 #    echo "temporary file stores to $out_dir"
     export TMPDIR=${out_dir}
   fi
-  tmpdir=`mktemp -d -t 'depp-tmp-XXXXXXXXXX'`
+  tmpdir=`mktemp -d -t 'depp-tmp-XXXXXXXX'`
   # check if the directory is created
   if [[ ! "$tmpdir" || ! -d "$tmpdir" ]]; then
     echo "Could not create temp dir"
@@ -167,17 +198,20 @@ else
   cp ${tmpdir}/${data_type}_aligned.fa ${out_dir}/
   cat ${tmpdir}/*entropy.txt > ${out_dir}/entropy.txt
   cp ${tmpdir}/${data_type}_upp.log ${out_dir}
-  gappa examine graft --jplace-path ${tmpdir}/placement.jplace  --out-dir ${out_dir}/ --allow-file-overwriting > /dev/null 2>&1
+  bp placement --placements  ${out_dir}/placement.jplace \
+    --output ${out_dir}/placement.nwk \
+    --method fully-resolved
+#  gappa examine graft --jplace-path ${tmpdir}/placement.jplace  --out-dir ${out_dir}/ --allow-file-overwriting > /dev/null 2>&1
 fi
 
-cat ${out_dir}/*aligned.fa > ${out_dir}/aligned.fa
-count_gapped_ratio.py --infile ${out_dir}/aligned.fa --outfile ${out_dir}/gap.txt
-rm ${out_dir}/aligned.fa
-filter_by_entropy_gap.sh 0.8 0.1 ${out_dir} ${query_file} ${accessory_dir}
-filter_by_entropy_gap.sh 1 0.2 ${out_dir} ${query_file} ${accessory_dir}
-filter_by_entropy_gap.sh 1.2 0.2 ${out_dir} ${query_file} ${accessory_dir}
-filter_by_entropy_gap.sh 1.2 0.3 ${out_dir} ${query_file} ${accessory_dir}
-mkdir ${out_dir}/all
-cat ${query_file} ${accessory_dir}/seqs.fa  > ${out_dir}/all/seqs.fa
-cp ${out_dir}/placement.jplace ${out_dir}/all/
-cp ${accessory_dir}/mapfile.json ${out_dir}/all/
+#cat ${out_dir}/*aligned.fa > ${out_dir}/aligned.fa
+#count_gapped_ratio.py --infile ${out_dir}/aligned.fa --outfile ${out_dir}/gap.txt
+#rm ${out_dir}/aligned.fa
+#filter_by_entropy_gap.sh 0.8 0.1 ${out_dir} ${query_file} ${accessory_dir}
+#filter_by_entropy_gap.sh 1 0.2 ${out_dir} ${query_file} ${accessory_dir}
+#filter_by_entropy_gap.sh 1.2 0.2 ${out_dir} ${query_file} ${accessory_dir}
+#filter_by_entropy_gap.sh 1.2 0.3 ${out_dir} ${query_file} ${accessory_dir}
+#mkdir ${out_dir}/all
+#cat ${query_file} ${accessory_dir}/seqs.fa  > ${out_dir}/all/seqs.fa
+#cp ${out_dir}/placement.jplace ${out_dir}/all/
+#cp ${accessory_dir}/mapfile.json ${out_dir}/all/

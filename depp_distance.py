@@ -1,6 +1,6 @@
 #!/usr/bin/python
 import os
-import Model_pl
+from depp import Model_pl
 import utils
 import default_config
 from omegaconf import OmegaConf

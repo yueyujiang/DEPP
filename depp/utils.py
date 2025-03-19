@@ -11,7 +11,9 @@ import csv
 import time
 import json
 import scipy.stats
+import treeswift as ts
 from Bio import SeqIO
+from scipy.cluster.hierarchy import linkage, fcluster
 
 
 def get_seq_length(args):
@@ -222,6 +224,7 @@ def process_seq(self_seq, args, isbackbone, need_mask=False):
         seqs = np.concatenate([i.reshape(1, 4, -1) for i in df['seqs'].values])
         seqs /= (seqs.sum(1, keepdims=True) + 1e-8)
         comb_names = list(df.index)
+
         if need_mask:
             mask_df = pd.DataFrame(columns=['masks'])
             mask_df['masks'] = mask_df['masks'].astype(object)
@@ -591,6 +594,129 @@ def save_repr_emb(model, args):
     t2 = time.time()
     print('finish! take {:.2f} seconds.'.format(t2 - t1))
 
+def p_q_cal(tree, group):
+    for node in tree.traverse_postorder():
+        if node.is_leaf():
+            if node.label in group:
+                node.group_cnt = {group[node.label]: 1}
+            else:
+                node.group_cnt = {}
+            node.child_sum = 1
+        else:
+            node.group_cnt = {}
+            node.child_sum = 0
+            for child in node.child_nodes():
+                for g in child.group_cnt:
+                    node.group_cnt[g] = node.group_cnt.get(g, 0) + child.group_cnt[g]
+                node.child_sum += child.child_sum
+
+    for node in tree.traverse_preorder():
+        node.score = {g: node.group_cnt[g] ** 2 / (tree.root.group_cnt[g] * node.child_sum) for g in node.group_cnt}
+
+    best_nodes = {}
+    for node in tree.traverse_postorder():
+        for g in node.score:
+            if g not in best_nodes or best_nodes[g][1] < node.score[g]:
+                best_nodes[g] = (node, node.score[g])
+    return best_nodes
+        # node.q = {g: node.group_cnt[g] / tree.child_sum for g in node.group_cnt}
+
+def custom_clustering(distance_matrix, threshold):
+    # Perform hierarchical clustering
+    linkage_matrix = linkage(distance_matrix, method='complete')
+
+    # Cluster the data based on the threshold
+    clusters = fcluster(linkage_matrix, t=threshold, criterion='distance')
+
+    return clusters
+
+def hamming_distance(seq1, seq2):
+    non_gap_mask = ~(np.all(seq1 == 0.25, axis=-2) | np.all(seq2 == 0.25, axis=-2))
+    # non_gap_mask = np.all((seq1 != 0.25) & (seq2 != 0.25), axis=-2)
+    return np.sum(np.any(seq1 != seq2, axis=-2) * non_gap_mask, axis=-1).astype(float) / non_gap_mask.sum(-1)
+
+def calculate_distance_matrix(seq1, seq2):
+    # num_species1 = len(seq1)
+    # num_species2 = len(seq2)
+    # seqs = np.array(list(one_hot_sequences.values()))
+    tiled_seqs1 = seq1[:, np.newaxis, :, :]
+    tiled_seqs2 = seq2[np.newaxis, :, :]
+    distance_matrix = hamming_distance(tiled_seqs1, tiled_seqs2)
+    return distance_matrix
+
+def combine_identical_seq_intree(tree, seq, thr=None, outdir=None, cluster=None, replicate=False):
+    if cluster is not None:
+        group = pd.read_csv(cluster, sep='\t', index_col=0)
+        if replicate:
+            group = group.groupby(group.index.str.split('_').str[0]).agg(lambda x: x.mode()[0])
+            group.index = [i.split('_')[0] for i in group.index]
+            group.loc[group['ClusterNumber'] == -1, 'ClusterNumber'] = np.arange((group['ClusterNumber'] == -1).sum()) + group['ClusterNumber'].max() + 1
+            group = {i: group.loc[i]['ClusterNumber'] for i in group.index}
+    elif thr is None:
+        unique_seq = set([seq[i].tobytes() for i in seq])
+        label_seq = dict(zip(unique_seq, np.arange(len(unique_seq))))
+        group = {s: label_seq[seq[s].tobytes()] for i, s in enumerate(seq)}
+    else:
+        distance_matrix = np.zeros([len(seq), len(seq)])
+        one_hot_seq = np.stack(list(seq.values()), axis=0)
+        for i in range(0, len(distance_matrix), 100):
+            print(i)
+            distance_matrix[i: i+100] = calculate_distance_matrix(one_hot_seq[i: i+100], one_hot_seq)
+        clusters = custom_clustering(distance_matrix, threshold=thr)
+        group = {s: clusters[i] for i, s in enumerate(seq)}
+
+    best_node = p_q_cal(tree, group=group)
+    best_node_group = collections.defaultdict(list)
+    LCA_node_name = {}
+    for s in group.keys():
+        best_node_group[best_node[group[s]][0]].append(s)
+        if best_node[group[s]][0].is_leaf():
+            LCA_node_name[s] = s
+        else:
+            LCA_node_name[s] = f'DEPP-LCA{group[s]}'
+
+    name_to_node = {i.label: i for i in tree.traverse_leaves()}
+
+    # for leaf in tree.traverse_leaves():
+    #     if leaf.label not in group:
+    #         continue
+    #     if not best_node[group[leaf.label]][0].is_leaf():
+    #         leaf.label = f"OriginalNode{leaf.label}"
+
+    for node in best_node_group:
+        if node.is_leaf():
+            continue
+        # edge_length = np.mean([node.distance[i] for i in best_node_group[node]])
+        lca_nodes = np.unique([LCA_node_name[item] for item in best_node_group[node]])
+        for lca in lca_nodes:
+            edge_length = np.mean([tree.distance_between(name_to_node[i], node) for i in best_node_group[node] if LCA_node_name[i] == lca])
+            new_node = ts.Node(edge_length=edge_length, label=LCA_node_name[best_node_group[node][0]])
+            node.add_child(new_node)
+        # for s in best_node_group[node]:
+        #     new_node.add_child(ts.Node(label=s, edge_length=0))
+
+    # for node in tree.traverse_postorder():
+    #     node.distance = None
+
+    if outdir is not None:
+        tree.write_tree_newick(f'{outdir}/tree_forplacement.newick')
+
+    for leaf in tree.traverse_leaves():
+        if (leaf.label in group) and (LCA_node_name[leaf.label] != leaf.label):
+            leaf.parent.remove_child(leaf)
+
+    modified = True
+    while modified:
+        modified = False
+        for node in tree.traverse_leaves():
+            if (node.label not in group) and ("DEPP-LCA" not in node.label):
+                node.parent.remove_child(node)
+                modified = True
+
+    tree.suppress_unifurcations()
+    # tree.resolve_polytomies()
+    return tree, LCA_node_name
+
 # def save_depp_dist(model, args, recon_model=None):
 #     t1 = time.time()
 #     if model is not None:
@@ -716,4 +842,3 @@ def save_repr_emb(model, args):
 #     #     f.write("\n".join(query_seq_names) + '\n')
 #     print('original distanace matrix saved!')
 #     print("take {:.2f} seconds".format(t5-t1))
-

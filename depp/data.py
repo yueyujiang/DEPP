@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-
+import collections
 import os
 import torch
 import treeswift
@@ -37,6 +37,7 @@ class data(Dataset):
         print('Loding data...')
         self_seq = SeqIO.to_dict(SeqIO.parse(backbone_seq_file, "fasta"))
         tree = treeswift.read_tree(backbone_tree_file, 'newick')
+        self.tree = tree
 
 #        self.nodes = list(self_seq.keys())
 
@@ -52,8 +53,18 @@ class data(Dataset):
                 self.distance_matrix[key][key] = 0
             self.distance_matrix = pd.DataFrame.from_dict(self.distance_matrix)
             print('Finish distance matrix calculation!')
-        self.nodes, self.seq = utils.process_seq(self_seq, args, True)
-        self.seq = dict(zip(self.nodes, self.seq))
+        self.nodes, self.seq = utils.process_seq(self_seq, args, False)
+        nodes2, seq2 = utils.process_seq(self_seq, args, True)
+        seq_tmp = collections.defaultdict(list)
+        for i, n in enumerate(self.nodes):
+            seq_tmp[n.split('_')[0].split('splithere')[0]].append(self.seq[i])
+        for i, n in enumerate(nodes2):
+            if n not in seq_tmp:
+                print('Error!')
+            # seq_tmp[n].append(seq2[i])
+            seq_tmp[n] = [seq2[i]]
+        # self.seq = dict(zip(self.nodes, self.seq))
+        self.seq, self.nodes = seq_tmp, list(seq_tmp.keys())
         self.model_idx = idx
 
     def true_distance(self, nodes1, nodes2):
@@ -91,7 +102,7 @@ class data(Dataset):
         else:
             sample = {}
             node_name = self.nodes[idx]
-            seq = self.seq[node_name]
+            seq = self.seq[node_name][np.random.randint(len(self.seq[node_name]))]
             sample['seqs'] = seq
             sample['nodes'] = node_name
             sample['cluster_idx'] = self.model_idx

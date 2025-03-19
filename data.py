@@ -18,6 +18,8 @@ class data(Dataset):
         backbone_seq_file = args.backbone_seq_file
         self_seq = SeqIO.to_dict(SeqIO.parse(backbone_seq_file, "fasta"))
         tree = treeswift.read_tree(backbone_tree_file, 'newick')
+        self.tree = tree
+
 
 #        self.nodes = list(self_seq.keys())
 

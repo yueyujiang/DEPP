@@ -144,3 +144,4 @@ class model(LightningModule):
         self.trainer.save_checkpoint(
             f'{self.hparams.model_dir}/cluster-depp.pth')
         sys.exit()
+
